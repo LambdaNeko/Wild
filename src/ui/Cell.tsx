@@ -1,0 +1,69 @@
+import type {
+  AnimalDefinition,
+  AnimalType,
+  Position,
+  QuantumToken
+} from "../domain/types";
+import { Token } from "./Token";
+
+type CellProps = {
+  position: Position;
+  token?: QuantumToken;
+  animals: AnimalDefinition[];
+  selected: boolean;
+  legal: boolean;
+  moveAnimals: AnimalType[];
+  onCellClick: () => void;
+  onTokenSelect: () => void;
+};
+
+export function Cell({
+  position,
+  token,
+  animals,
+  selected,
+  legal,
+  moveAnimals,
+  onCellClick,
+  onTokenSelect
+}: CellProps) {
+  function activateCell() {
+    onCellClick();
+  }
+
+  return (
+    <div
+      className={`cell ${legal ? "legal" : ""}`}
+      role="button"
+      tabIndex={0}
+      onClick={activateCell}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          activateCell();
+        }
+      }}
+      aria-label={`${position.x + 1},${position.y + 1}`}
+    >
+      {legal && <span className="legal-dot" />}
+      {legal && moveAnimals.length > 0 && (
+        <span className="move-animals">
+          {moveAnimals
+            .map(
+              (animalId) =>
+                animals.find((animal) => animal.id === animalId)?.icon ?? animalId
+            )
+            .join("")}
+        </span>
+      )}
+      {token && (
+        <Token
+          token={token}
+          animals={animals}
+          selected={selected}
+          onSelect={onTokenSelect}
+        />
+      )}
+    </div>
+  );
+}
