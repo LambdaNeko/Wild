@@ -5,9 +5,17 @@ type HandProps = {
   owner: PlayerId;
   tokens: QuantumToken[];
   animals: AnimalDefinition[];
+  selectedTokenId: string | null;
+  onTokenSelect: (tokenId: string) => void;
 };
 
-export function Hand({ owner, tokens, animals }: HandProps) {
+export function Hand({
+  owner,
+  tokens,
+  animals,
+  selectedTokenId,
+  onTokenSelect
+}: HandProps) {
   const handTokens = tokens.filter(
     (token) => token.location === "hand" && token.currentOwner === owner
   );
@@ -24,8 +32,8 @@ export function Hand({ owner, tokens, animals }: HandProps) {
               <Token
                 token={token}
                 animals={animals}
-                selected={false}
-                onSelect={() => undefined}
+                selected={token.id === selectedTokenId}
+                onSelect={() => onTokenSelect(token.id)}
               />
             </div>
           ))}

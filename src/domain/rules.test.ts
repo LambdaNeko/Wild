@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { defaultGameDefinition } from "../game-definitions/grass5x5";
 import { propagateGlobalConstraints } from "./constraints";
-import { applyAction, getLegalMovesForToken, narrowCandidatesByMove } from "./rules";
+import {
+  applyAction,
+  getLegalDropsForToken,
+  getLegalMovesForToken,
+  narrowCandidatesByMove
+} from "./rules";
 import { createInitialState } from "./setup";
 import type { GameState } from "./types";
 
@@ -357,5 +362,114 @@ describe("capture", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.state.winner).toBe("B");
+  });
+});
+
+describe("drop", () => {
+  it("自分の持ち駒を空きマスに打つ", () => {
+    const state = createInitialState(defaultGameDefinition);
+    const prepared: GameState = {
+      ...state,
+      tokens: state.tokens.map((token) =>
+        token.id === "A-9"
+          ? {
+              ...token,
+              location: "hand",
+              position: null,
+              currentOwner: "A",
+              candidates: ["rabbit"]
+            }
+          : token
+      )
+    };
+
+    const result = applyAction(prepared, {
+      type: "drop",
+      tokenId: "A-9",
+      to: { x: 0, y: 2 }
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const dropped = result.state.tokens.find((token) => token.id === "A-9")!;
+    expect(dropped.location).toBe("board");
+    expect(dropped.position).toEqual({ x: 0, y: 2 });
+    expect(result.state.turn).toBe("B");
+    expect(result.state.moveHistory.at(-1)?.from).toBeNull();
+  });
+
+  it("駒のあるマスには打てない", () => {
+    const state = createInitialState(defaultGameDefinition);
+    const prepared: GameState = {
+      ...state,
+      tokens: state.tokens.map((token) =>
+        token.id === "A-9"
+          ? {
+              ...token,
+              location: "hand",
+              position: null,
+              currentOwner: "A",
+              candidates: ["rabbit"]
+            }
+          : token
+      )
+    };
+
+    const result = applyAction(prepared, {
+      type: "drop",
+      tokenId: "A-9",
+      to: { x: 2, y: 3 }
+    });
+
+    expect(result.ok).toBe(false);
+  });
+
+  it("相手の持ち駒は打てない", () => {
+    const state = createInitialState(defaultGameDefinition);
+    const prepared: GameState = {
+      ...state,
+      tokens: state.tokens.map((token) =>
+        token.id === "B-1"
+          ? {
+              ...token,
+              location: "hand",
+              position: null,
+              currentOwner: "B",
+              candidates: ["rabbit"]
+            }
+          : token
+      )
+    };
+
+    const result = applyAction(prepared, {
+      type: "drop",
+      tokenId: "B-1",
+      to: { x: 0, y: 2 }
+    });
+
+    expect(result.ok).toBe(false);
+  });
+
+  it("合法な打ち先は空きマスだけを返す", () => {
+    const state = createInitialState(defaultGameDefinition);
+    const prepared: GameState = {
+      ...state,
+      tokens: state.tokens.map((token) =>
+        token.id === "A-9"
+          ? {
+              ...token,
+              location: "hand",
+              position: null,
+              currentOwner: "A",
+              candidates: ["rabbit"]
+            }
+          : token
+      )
+    };
+
+    const drops = getLegalDropsForToken(prepared, "A-9");
+
+    expect(drops).toContainEqual({ x: 0, y: 2 });
+    expect(drops).not.toContainEqual({ x: 2, y: 3 });
   });
 });

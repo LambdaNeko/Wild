@@ -32,7 +32,7 @@ export function MoveHistory({ records, animals }: MoveHistoryProps) {
                   {formatPosition(record.from)} →{" "}
                   {record.action.type === "move"
                     ? formatPosition(record.action.to)
-                    : "打つ"}
+                    : `${formatPosition(record.action.to)} 打`}
                 </span>
                 {record.capturedTokenId && (
                   <span className="move-capture">捕獲 {record.capturedTokenId}</span>
