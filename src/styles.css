@@ -24,15 +24,7 @@ button {
 .app-shell {
   width: min(1120px, calc(100vw - 32px));
   margin: 0 auto;
-  padding: 24px 0 32px;
-}
-
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 18px;
+  padding: 12px 0 18px;
 }
 
 h1,
@@ -48,24 +40,6 @@ h1 {
 
 h2 {
   font-size: 1rem;
-}
-
-.topbar p {
-  margin-top: 7px;
-  font-weight: 700;
-  color: #587044;
-}
-
-.icon-button {
-  display: grid;
-  width: 44px;
-  height: 44px;
-  place-items: center;
-  border: 1px solid #c7b88f;
-  border-radius: 8px;
-  color: #2b3a26;
-  background: #fffdf7;
-  cursor: pointer;
 }
 
 .game-layout {
@@ -143,7 +117,7 @@ h2 {
   display: grid;
   width: calc(100% - 10px);
   height: calc(100% - 10px);
-  grid-template-rows: minmax(28px, 1fr) 22px;
+  grid-template-rows: 1fr;
   align-items: center;
   justify-items: center;
   border: 2px solid transparent;
@@ -169,21 +143,36 @@ h2 {
 }
 
 .token-main {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
   font-size: clamp(1.8rem, 7vw, 3.2rem);
   line-height: 1;
+  pointer-events: none;
+  transform: translateY(0.08em);
+}
+
+.token.owner-b .token-main {
+  transform: translateY(-0.08em);
 }
 
 .token-candidates {
-  width: 100%;
-  min-width: 0;
-  overflow: hidden;
-  color: #415138;
-  font-size: clamp(0.58rem, 1.4vw, 0.78rem);
-  font-weight: 700;
-  line-height: 1.1;
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  display: inline-grid;
+  width: clamp(1.25rem, 3vw, 1.55rem);
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px solid rgba(65, 81, 56, 0.32);
+  border-radius: 999px;
+  color: #2f412a;
+  background: rgba(255, 255, 255, 0.72);
+  font-size: clamp(0.68rem, 1.5vw, 0.86rem);
+  font-weight: 800;
+  line-height: 1;
   text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .side-panel {
@@ -192,10 +181,16 @@ h2 {
 }
 
 .panel {
+  position: relative;
   padding: 16px;
   border: 1px solid #d4c6a3;
   border-radius: 8px;
   background: #fffdf7;
+}
+
+.hand-panel.active-turn {
+  border-color: #2f7e54;
+  box-shadow: inset 5px 0 0 #2f7e54;
 }
 
 .selected-meta,
@@ -232,7 +227,7 @@ h2 {
 .hand-token .token {
   width: calc(100% - 8px);
   height: calc(100% - 8px);
-  grid-template-rows: minmax(24px, 1fr) 18px;
+  grid-template-rows: 1fr;
   padding: 4px 3px;
 }
 
@@ -245,7 +240,10 @@ h2 {
 }
 
 .hand-token .token-candidates {
-  font-size: 0.62rem;
+  right: 3px;
+  bottom: 3px;
+  width: 1.15rem;
+  font-size: 0.68rem;
 }
 
 .candidate strong {
@@ -363,14 +361,36 @@ h2 {
   background: #ffe8df;
 }
 
+.bottom-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 14px;
+}
+
+.reset-button {
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid #c7b88f;
+  border-radius: 8px;
+  color: #2b3a26;
+  background: #fffdf7;
+  cursor: pointer;
+  font-weight: 800;
+}
+
 @media (max-width: 760px) {
   .app-shell {
     width: min(100vw - 20px, 620px);
-    padding-top: 16px;
+    padding: 8px 0 12px;
   }
 
   .game-layout {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .board-column {
+    gap: 6px;
   }
 
   .board {
@@ -378,8 +398,39 @@ h2 {
     padding: 6px;
   }
 
+  .panel {
+    padding: 10px 12px;
+  }
+
+  .hand-panel {
+    min-height: 58px;
+  }
+
+  .hand-panel h2 {
+    font-size: 0.92rem;
+  }
+
+  .selected-meta,
+  .hand-list,
+  .candidate-grid {
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .muted {
+    margin-top: 6px;
+  }
+
+  .hand-token {
+    width: 54px;
+  }
+
   .token {
-    grid-template-rows: minmax(24px, 1fr) 18px;
+    grid-template-rows: 1fr;
     padding: 4px 2px;
+  }
+
+  .bottom-actions {
+    margin-top: 10px;
   }
 }

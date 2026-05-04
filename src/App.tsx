@@ -96,26 +96,17 @@ export default function App() {
 
   return (
     <main className="app-shell">
-      <header className="topbar">
-        <div>
-          <h1>{state.definition.name}</h1>
-          <p>
-            {state.winner
-              ? `勝者: ${state.winner}`
-              : `手番: ${state.turn}`}
-          </p>
-        </div>
-        <button className="icon-button" type="button" onClick={reset} title="リセット">
-          ↻
-        </button>
-      </header>
-
       {state.winner && <div className="winner-banner">{state.winner} の勝利</div>}
       {message && <div className="message">{message}</div>}
 
       <section className="game-layout">
         <div className="board-column">
-          <Hand owner="B" tokens={state.tokens} animals={state.definition.animals} />
+          <Hand
+            owner="B"
+            tokens={state.tokens}
+            animals={state.definition.animals}
+            active={state.turn === "B" && !state.winner}
+          />
           <Board
             state={state}
             selectedTokenId={selectedTokenId}
@@ -124,7 +115,12 @@ export default function App() {
             onCellClick={clickCell}
             onTokenSelect={selectToken}
           />
-          <Hand owner="A" tokens={state.tokens} animals={state.definition.animals} />
+          <Hand
+            owner="A"
+            tokens={state.tokens}
+            animals={state.definition.animals}
+            active={state.turn === "A" && !state.winner}
+          />
         </div>
 
         <aside className="side-panel">
@@ -135,6 +131,12 @@ export default function App() {
           />
         </aside>
       </section>
+
+      <div className="bottom-actions">
+        <button className="reset-button" type="button" onClick={reset}>
+          ↻ リセット
+        </button>
+      </div>
     </main>
   );
 }

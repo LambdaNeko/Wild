@@ -5,15 +5,16 @@ type HandProps = {
   owner: PlayerId;
   tokens: QuantumToken[];
   animals: AnimalDefinition[];
+  active: boolean;
 };
 
-export function Hand({ owner, tokens, animals }: HandProps) {
+export function Hand({ owner, tokens, animals, active }: HandProps) {
   const handTokens = tokens.filter(
     (token) => token.location === "hand" && token.currentOwner === owner
   );
 
   return (
-    <section className="panel hand-panel">
+    <section className={`panel hand-panel ${active ? "active-turn" : ""}`}>
       <h2>{owner} の持ち駒</h2>
       {handTokens.length === 0 ? (
         <p className="muted">なし</p>
