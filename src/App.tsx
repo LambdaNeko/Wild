@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createInitialState } from "./domain/setup";
 import {
   applyAction,
+  getLegalDropsForToken,
   getLegalMovesForToken,
   narrowCandidatesByMove,
   resolveWinnerByKingCandidates
@@ -33,6 +34,12 @@ export default function App() {
     () => (selectedTokenId ? getLegalMovesForToken(state, selectedTokenId) : []),
     [state, selectedTokenId]
   );
+  const legalDrops = useMemo(
+    () => (selectedTokenId ? getLegalDropsForToken(state, selectedTokenId) : []),
+    [state, selectedTokenId]
+  );
+  const legalTargets =
+    selectedToken?.location === "hand" ? legalDrops : legalMoves;
   const legalMoveHints = useMemo(() => {
     if (!selectedToken || selectedToken.position === null) {
       return [];
@@ -65,18 +72,25 @@ export default function App() {
       return;
     }
 
-    const legal = legalMoves.some(
+    const legal = legalTargets.some(
       (move) => move.x === position.x && move.y === position.y
     );
     if (!legal) {
       return;
     }
 
-    const result = applyAction(state, {
-      type: "move",
-      tokenId: selectedTokenId,
-      to: position
-    });
+    const result =
+      selectedToken?.location === "hand"
+        ? applyAction(state, {
+            type: "drop",
+            tokenId: selectedTokenId,
+            to: position
+          })
+        : applyAction(state, {
+            type: "move",
+            tokenId: selectedTokenId,
+            to: position
+          });
 
     if (!result.ok) {
       setMessage(result.reason);
@@ -106,11 +120,13 @@ export default function App() {
             tokens={state.tokens}
             animals={state.definition.animals}
             active={state.turn === "B" && !state.winner}
+            selectedTokenId={selectedTokenId}
+            onTokenSelect={selectToken}
           />
           <Board
             state={state}
             selectedTokenId={selectedTokenId}
-            legalMoves={legalMoves}
+            legalMoves={legalTargets}
             legalMoveHints={legalMoveHints}
             onCellClick={clickCell}
             onTokenSelect={selectToken}
@@ -120,6 +136,8 @@ export default function App() {
             tokens={state.tokens}
             animals={state.definition.animals}
             active={state.turn === "A" && !state.winner}
+            selectedTokenId={selectedTokenId}
+            onTokenSelect={selectToken}
           />
         </div>
 

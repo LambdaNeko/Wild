@@ -6,9 +6,18 @@ type HandProps = {
   tokens: QuantumToken[];
   animals: AnimalDefinition[];
   active: boolean;
+  selectedTokenId: string | null;
+  onTokenSelect: (tokenId: string) => void;
 };
 
-export function Hand({ owner, tokens, animals, active }: HandProps) {
+export function Hand({
+  owner,
+  tokens,
+  animals,
+  active,
+  selectedTokenId,
+  onTokenSelect
+}: HandProps) {
   const handTokens = tokens.filter(
     (token) => token.location === "hand" && token.currentOwner === owner
   );
@@ -25,8 +34,8 @@ export function Hand({ owner, tokens, animals, active }: HandProps) {
               <Token
                 token={token}
                 animals={animals}
-                selected={false}
-                onSelect={() => undefined}
+                selected={token.id === selectedTokenId}
+                onSelect={() => onTokenSelect(token.id)}
               />
             </div>
           ))}
