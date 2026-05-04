@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { chooseNpcAction, type NpcStrength } from "./domain/npc";
 import { createInitialState } from "./domain/setup";
 import {
   applyAction,
@@ -15,10 +16,19 @@ import { Hand } from "./ui/Hand";
 import { MoveHistory } from "./ui/MoveHistory";
 
 const createGame = () => createInitialState(defaultGameDefinition);
+const NPC_PLAYER = "B";
+const NPC_DELAY_MS = 450;
+
+const npcStrengthLabels: Record<NpcStrength, string> = {
+  weak: "弱",
+  medium: "中",
+  strong: "強"
+};
 
 export default function App() {
   const [state, setState] = useState<GameState>(() => createGame());
   const [selectedTokenId, setSelectedTokenId] = useState<string | null>(null);
+  const [npcStrength, setNpcStrength] = useState<NpcStrength>("medium");
   const [message, setMessage] = useState<string>("");
 
   useEffect(() => {
@@ -27,6 +37,36 @@ export default function App() {
       return resolvedState === currentState ? currentState : resolvedState;
     });
   }, []);
+
+  const isNpcTurn = state.turn === NPC_PLAYER && !state.winner;
+
+  useEffect(() => {
+    if (!isNpcTurn) {
+      return;
+    }
+
+    setSelectedTokenId(null);
+    setMessage("NPC思考中");
+
+    const timer = window.setTimeout(() => {
+      const action = chooseNpcAction(state, npcStrength);
+      if (!action) {
+        setMessage("NPCが指せる手はありません。");
+        return;
+      }
+
+      const result = applyAction(state, action);
+      if (!result.ok) {
+        setMessage(result.reason);
+        return;
+      }
+
+      setState(result.state);
+      setMessage("");
+    }, NPC_DELAY_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [isNpcTurn, npcStrength, state]);
 
   const selectedToken =
     state.tokens.find((token) => token.id === selectedTokenId) ?? null;
@@ -57,6 +97,10 @@ export default function App() {
   }, [legalMoves, selectedToken, state]);
 
   function selectToken(tokenId: string) {
+    if (isNpcTurn) {
+      return;
+    }
+
     const token = state.tokens.find((item) => item.id === tokenId);
     if (!token || token.currentOwner !== state.turn || state.winner) {
       setSelectedTokenId(tokenId);
@@ -68,7 +112,7 @@ export default function App() {
   }
 
   function clickCell(position: Position) {
-    if (!selectedTokenId || state.winner) {
+    if (!selectedTokenId || state.winner || isNpcTurn) {
       return;
     }
 
@@ -151,6 +195,18 @@ export default function App() {
       </section>
 
       <div className="bottom-actions">
+        <div className="segmented-control" aria-label="NPC強さ">
+          {(Object.keys(npcStrengthLabels) as NpcStrength[]).map((strength) => (
+            <button
+              className={strength === npcStrength ? "active" : ""}
+              key={strength}
+              type="button"
+              onClick={() => setNpcStrength(strength)}
+            >
+              {npcStrengthLabels[strength]}
+            </button>
+          ))}
+        </div>
         <button className="reset-button" type="button" onClick={reset}>
           ↻ リセット
         </button>
