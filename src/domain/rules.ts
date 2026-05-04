@@ -7,6 +7,7 @@ import {
 } from "./selectors";
 import type {
   AnimalType,
+  DropAction,
   GameAction,
   GameState,
   MoveAction,
@@ -37,11 +38,90 @@ export function getLegalMovesForToken(
   return moves;
 }
 
+export function getLegalDropsForToken(
+  state: GameState,
+  tokenId: string
+): Position[] {
+  const token = state.tokens.find((item) => item.id === tokenId);
+  if (!token || token.location !== "hand" || token.currentOwner !== state.turn) {
+    return [];
+  }
+
+  const drops: Position[] = [];
+  for (let y = 0; y < state.definition.board.height; y += 1) {
+    for (let x = 0; x < state.definition.board.width; x += 1) {
+      const to = { x, y };
+      if (applyDrop(state, { type: "drop", tokenId, to }).ok) {
+        drops.push(to);
+      }
+    }
+  }
+  return drops;
+}
+
 export function applyAction(state: GameState, action: GameAction): MoveResult {
   if (action.type === "drop") {
-    return { ok: false, reason: "MVPでは打つルールは未実装です。" };
+    return applyDrop(state, action);
   }
   return applyMove(state, action);
+}
+
+export function applyDrop(state: GameState, action: DropAction): MoveResult {
+  if (state.winner) {
+    return { ok: false, reason: "すでに勝敗が決まっています。" };
+  }
+
+  const droppingToken = state.tokens.find((token) => token.id === action.tokenId);
+  if (!droppingToken || droppingToken.location !== "hand") {
+    return { ok: false, reason: "持ち駒ではありません。" };
+  }
+
+  if (droppingToken.currentOwner !== state.turn) {
+    return { ok: false, reason: "現在の手番の持ち駒ではありません。" };
+  }
+
+  const occupiedToken = getTokenAt(state, action.to);
+  const inBounds =
+    action.to.x >= 0 &&
+    action.to.y >= 0 &&
+    action.to.x < state.definition.board.width &&
+    action.to.y < state.definition.board.height;
+  if (!inBounds) {
+    return { ok: false, reason: "盤外には打てません。" };
+  }
+  if (occupiedToken) {
+    return { ok: false, reason: "駒のあるマスには打てません。" };
+  }
+
+  const droppedState: GameState = {
+    ...state,
+    turn: getNextPlayer(state),
+    tokens: state.tokens.map((token) =>
+      token.id === droppingToken.id
+        ? {
+            ...token,
+            location: "board" as const,
+            position: { ...action.to }
+          }
+        : token
+    ),
+    moveHistory: [
+      ...state.moveHistory,
+      {
+        action,
+        from: null
+      }
+    ]
+  };
+
+  const constrainedState = propagateGlobalConstraints(droppedState);
+  const resolvedState = resolveWinnerByKingCandidates(constrainedState);
+  const violation = getConstraintViolation(resolvedState);
+  if (violation) {
+    return { ok: false, reason: violation };
+  }
+
+  return { ok: true, state: resolvedState };
 }
 
 export function applyMove(state: GameState, action: MoveAction): MoveResult {
