@@ -5,6 +5,7 @@ type HandProps = {
   owner: PlayerId;
   tokens: QuantumToken[];
   animals: AnimalDefinition[];
+  active: boolean;
   selectedTokenId: string | null;
   onTokenSelect: (tokenId: string) => void;
 };
@@ -13,6 +14,7 @@ export function Hand({
   owner,
   tokens,
   animals,
+  active,
   selectedTokenId,
   onTokenSelect
 }: HandProps) {
@@ -21,7 +23,7 @@ export function Hand({
   );
 
   return (
-    <section className="panel hand-panel">
+    <section className={`panel hand-panel ${active ? "active-turn" : ""}`}>
       <h2>{owner} の持ち駒</h2>
       {handTokens.length === 0 ? (
         <p className="muted">なし</p>

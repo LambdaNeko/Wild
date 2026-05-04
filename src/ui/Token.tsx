@@ -13,10 +13,6 @@ export function Token({ token, animals, selected, onSelect }: TokenProps) {
       ? animals.find((animal) => animal.id === token.candidates[0])
       : undefined;
 
-  const candidateText = token.candidates
-    .map((candidate) => animals.find((animal) => animal.id === candidate)?.icon ?? candidate)
-    .join("");
-
   return (
     <button
       className={`token owner-${token.currentOwner.toLowerCase()} ${
@@ -27,7 +23,11 @@ export function Token({ token, animals, selected, onSelect }: TokenProps) {
       title={`${token.currentOwner} ${token.candidates.join("/")}`}
     >
       <span className="token-main">{fixedAnimal?.icon ?? "🌿"}</span>
-      <span className="token-candidates">{fixedAnimal?.displayName ?? candidateText}</span>
+      {!fixedAnimal && (
+        <span className="token-candidates" aria-label={`候補 ${token.candidates.length} 種類`}>
+          {token.candidates.length}
+        </span>
+      )}
     </button>
   );
 }
