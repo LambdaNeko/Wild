@@ -69,7 +69,7 @@ h2 {
 .game-layout {
   display: grid;
   grid-template-columns: minmax(320px, 640px) minmax(260px, 1fr);
-  gap: 20px;
+  gap: 16px;
   align-items: start;
 }
 
@@ -85,7 +85,12 @@ h2 {
 
 .board-column {
   display: grid;
-  gap: 14px;
+  gap: 8px;
+  width: min(100%, 640px);
+}
+
+.board-stage {
+  position: relative;
   width: min(100%, 640px);
 }
 
@@ -201,20 +206,52 @@ h2 {
 
 .side-panel {
   display: grid;
-  gap: 14px;
+  gap: 10px;
 }
 
 .panel {
   position: relative;
-  padding: 16px;
+  padding: 12px;
   border: 1px solid #d4c6a3;
   border-radius: 8px;
   background: #fffdf7;
 }
 
+.hand-panel {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+}
+
 .hand-panel.active-turn {
   border-color: #2f7e54;
   box-shadow: inset 5px 0 0 #2f7e54;
+}
+
+.hand-panel h2 {
+  flex: 0 0 auto;
+  font-size: 0.92rem;
+}
+
+.candidate-panel {
+  padding-top: 8px;
+}
+
+.candidate-header {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.candidate-header h2 {
+  flex: 0 0 auto;
+}
+
+.candidate-header .muted {
+  margin-top: 0;
 }
 
 .selected-meta,
@@ -224,6 +261,19 @@ h2 {
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 12px;
+}
+
+.selected-meta {
+  gap: 5px;
+  margin-top: 0;
+}
+
+.hand-panel .hand-list {
+  margin-top: 0;
+}
+
+.hand-panel .muted {
+  margin-top: 0;
 }
 
 .selected-meta span,
@@ -236,6 +286,21 @@ h2 {
   border: 1px solid #d7c89f;
   border-radius: 8px;
   background: #f7f0d9;
+}
+
+.selected-meta span {
+  min-height: 26px;
+  padding: 4px 7px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.candidate {
+  min-width: 36px;
+  justify-content: center;
+  padding: 6px;
+  font-size: 1.12rem;
 }
 
 .hand-token {
@@ -363,24 +428,37 @@ h2 {
 }
 
 .muted {
-  margin-top: 10px;
+  margin-top: 8px;
   color: #71806a;
 }
 
-.winner-banner,
-.message {
-  margin-bottom: 14px;
-  padding: 12px 14px;
-  border-radius: 8px;
-  font-weight: 800;
+.status-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
 }
 
-.winner-banner {
+.winner-announcement,
+.message-toast {
+  width: min(calc(100vw - 40px), 360px);
+  border-radius: 8px;
+  box-shadow: 0 18px 42px rgba(47, 36, 18, 0.24);
+  font-weight: 900;
+  text-align: center;
+}
+
+.winner-announcement {
+  padding: 18px 22px;
   color: #ffffff;
   background: #2f7e54;
+  font-size: 1.35rem;
 }
 
-.message {
+.message-toast {
+  padding: 12px 14px;
   color: #7e2f2f;
   background: #ffe8df;
 }
@@ -407,16 +485,16 @@ h2 {
 @media (max-width: 760px) {
   .app-shell {
     width: min(100vw - 20px, 620px);
-    padding: 8px 0 12px;
+    padding: 6px 0 10px;
   }
 
   .game-layout {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 8px;
   }
 
   .board-column {
-    gap: 6px;
+    gap: 5px;
   }
 
   .board {
@@ -425,30 +503,57 @@ h2 {
   }
 
   .panel {
-    padding: 10px 12px;
+    padding: 8px 10px;
   }
 
   .hand-panel {
-    min-height: 58px;
+    min-height: 42px;
+    gap: 8px;
+    padding: 6px 10px;
   }
 
   .hand-panel h2 {
-    font-size: 0.92rem;
+    font-size: 0.86rem;
+  }
+
+  .candidate-panel {
+    padding-top: 7px;
+  }
+
+  .candidate-header {
+    gap: 6px;
   }
 
   .selected-meta,
   .hand-list,
   .candidate-grid {
     gap: 6px;
-    margin-top: 8px;
-  }
-
-  .muted {
     margin-top: 6px;
   }
 
+  .selected-meta {
+    gap: 4px;
+    margin-top: 0;
+  }
+
+  .selected-meta span {
+    min-height: 24px;
+    padding: 3px 6px;
+    font-size: 0.78rem;
+  }
+
+  .muted {
+    margin-top: 5px;
+    font-size: 0.9rem;
+    line-height: 1.2;
+  }
+
+  .hand-panel .muted {
+    margin-top: 0;
+  }
+
   .hand-token {
-    width: 54px;
+    width: 44px;
   }
 
   .token {
@@ -456,7 +561,16 @@ h2 {
     padding: 4px 2px;
   }
 
+  .hand-token .token-main {
+    font-size: 1.4rem;
+  }
+
+  .hand-token .token-candidates {
+    width: 1rem;
+    font-size: 0.62rem;
+  }
+
   .bottom-actions {
-    margin-top: 10px;
+    margin-top: 8px;
   }
 }
