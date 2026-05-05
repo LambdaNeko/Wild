@@ -154,9 +154,6 @@ export default function App() {
 
   return (
     <main className="app-shell">
-      {state.winner && <div className="winner-banner">{state.winner} の勝利</div>}
-      {message && <div className="message">{message}</div>}
-
       <section className="game-layout">
         <div className="board-column">
           <Hand
@@ -167,14 +164,22 @@ export default function App() {
             selectedTokenId={selectedTokenId}
             onTokenSelect={selectToken}
           />
-          <Board
-            state={state}
-            selectedTokenId={selectedTokenId}
-            legalMoves={legalTargets}
-            legalMoveHints={legalMoveHints}
-            onCellClick={clickCell}
-            onTokenSelect={selectToken}
-          />
+          <div className="board-stage">
+            <Board
+              state={state}
+              selectedTokenId={selectedTokenId}
+              legalMoves={legalTargets}
+              legalMoveHints={legalMoveHints}
+              onCellClick={clickCell}
+              onTokenSelect={selectToken}
+            />
+            <div className="status-layer" aria-live="polite">
+              {state.winner && (
+                <div className="winner-announcement">{state.winner} の勝利</div>
+              )}
+              {message && <div className="message-toast">{message}</div>}
+            </div>
+          </div>
           <Hand
             owner="A"
             tokens={state.tokens}
