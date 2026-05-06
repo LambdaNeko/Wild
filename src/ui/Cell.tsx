@@ -4,6 +4,7 @@ import type {
   Position,
   QuantumToken
 } from "../domain/types";
+import { AnimalIcon } from "./AnimalIcon";
 import { Token } from "./Token";
 
 type CellProps = {
@@ -48,12 +49,18 @@ export function Cell({
       {legal && <span className="legal-dot" />}
       {legal && moveAnimals.length > 0 && (
         <span className="move-animals">
-          {moveAnimals
-            .map(
-              (animalId) =>
-                animals.find((animal) => animal.id === animalId)?.icon ?? animalId
-            )
-            .join("")}
+          {moveAnimals.slice(0, 4).map((animalId) => {
+            const animal = animals.find((item) => item.id === animalId);
+            return (
+              <AnimalIcon
+                animalId={animalId}
+                className="move-animal-icon"
+                decorative
+                key={animalId}
+                label={animal?.displayName ?? animalId}
+              />
+            );
+          })}
         </span>
       )}
       {token && (

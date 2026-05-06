@@ -1,4 +1,5 @@
 import type { AnimalDefinition, QuantumToken } from "../domain/types";
+import { AnimalIcon } from "./AnimalIcon";
 
 type CandidateListProps = {
   token: QuantumToken | null;
@@ -31,8 +32,18 @@ export function CandidateList({ token, animals }: CandidateListProps) {
         {token.candidates.map((candidate) => {
           const animal = animals.find((item) => item.id === candidate);
           return (
-            <div className="candidate" key={candidate}>
-              <span>{animal?.icon}</span>
+            <div
+              className="candidate"
+              key={candidate}
+              title={animal?.displayName ?? candidate}
+            >
+              {animal && (
+                <AnimalIcon
+                  animalId={animal.id}
+                  className="candidate-icon"
+                  label={animal.displayName}
+                />
+              )}
             </div>
           );
         })}
