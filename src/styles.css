@@ -791,6 +791,14 @@ h2 {
   .token.moved-now {
     animation: none;
   }
+
+  .moving-token-layer {
+    display: none;
+  }
+
+  .token.moving-away {
+    opacity: 1;
+  }
 }
 
 .bottom-actions {
