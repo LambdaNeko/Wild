@@ -27,6 +27,7 @@ const createGame = (definition: GameDefinition) => createInitialState(definition
 const NPC_PLAYER = "B";
 const NPC_DELAY_MS = 450;
 const ANIMATION_CUE_MS = 720;
+const OPENING_REVEAL_MS = 1900;
 
 type AnimationCue = {
   id: number;
@@ -70,6 +71,7 @@ export default function App() {
   const [npcStrength, setNpcStrength] = useState<NpcStrength>("medium");
   const [message, setMessage] = useState<string>("");
   const [animationCue, setAnimationCue] = useState<AnimationCue | null>(null);
+  const [openingRevealId, setOpeningRevealId] = useState<number | null>(null);
 
   useEffect(() => {
     setState((currentState) => {
@@ -80,6 +82,29 @@ export default function App() {
 
   const isNpcTurn = state.turn === NPC_PLAYER && !state.winner;
   const selectedStage = state.definition;
+  const openingRevealTokens = useMemo(
+    () =>
+      openingRevealId === null
+        ? {}
+        : createOpeningRevealTokens(state),
+    [openingRevealId, state]
+  );
+
+  useEffect(() => {
+    if (openingRevealId === null) {
+      return;
+    }
+
+    const timer = window.setTimeout(
+      () => setOpeningRevealId(null),
+      OPENING_REVEAL_MS
+    );
+    return () => window.clearTimeout(timer);
+  }, [openingRevealId]);
+
+  function startOpeningReveal() {
+    setOpeningRevealId(window.performance.now());
+  }
 
   function queueAnimationCue(
     previousState: GameState,
@@ -262,6 +287,7 @@ export default function App() {
     setActiveCandidate(null);
     setMessage("");
     setAnimationCue(null);
+    startOpeningReveal();
   }
 
   function selectStage(definition: GameDefinition) {
@@ -271,6 +297,7 @@ export default function App() {
     setActiveCandidate(null);
     setMessage("");
     setAnimationCue(null);
+    startOpeningReveal();
     setScreen("game");
   }
 
@@ -358,6 +385,7 @@ export default function App() {
               legalMoves={legalTargets}
               legalMoveHints={legalMoveHints}
               animationCue={animationCue}
+              openingRevealTokens={openingRevealTokens}
               onCellClick={clickCell}
               onTokenSelect={selectToken}
             />
@@ -407,6 +435,74 @@ export default function App() {
       </div>
     </main>
   );
+}
+
+function createOpeningRevealTokens(state: GameState): Record<string, AnimalType> {
+  const revealTokens: Record<string, AnimalType> = {};
+
+  state.definition.players.forEach((player) => {
+    const animalQueue = createOpeningAnimalQueue(state);
+    const playerTokens = state.tokens.filter(
+      (token) => token.originalSide === player.id && token.location === "board"
+    );
+    const centerToken = findCenterOpeningToken(state, playerTokens);
+
+    const sortedTokens = [
+      ...(centerToken ? [centerToken] : []),
+      ...playerTokens.filter((token) => token.id !== centerToken?.id)
+    ];
+
+    sortedTokens.forEach((token, index) => {
+      const animalId = animalQueue[index];
+      if (animalId) {
+        revealTokens[token.id] = animalId;
+      }
+    });
+  });
+
+  return revealTokens;
+}
+
+function createOpeningAnimalQueue(state: GameState): AnimalType[] {
+  const animals = state.definition.animals.flatMap((animal) =>
+    Array.from({ length: animal.count }, () => animal.id)
+  );
+
+  return [
+    ...animals.filter((animal) => animal === "king"),
+    ...animals.filter((animal) => animal !== "king")
+  ];
+}
+
+function findCenterOpeningToken(
+  state: GameState,
+  tokens: QuantumToken[]
+): QuantumToken | null {
+  if (tokens.length === 0) {
+    return null;
+  }
+
+  const centerX = (state.definition.board.width - 1) / 2;
+  const homeY = tokens[0].originalSide === "A" ? state.definition.board.height - 1 : 0;
+
+  return [...tokens].sort((first, second) => {
+    const firstPosition = first.position;
+    const secondPosition = second.position;
+    if (!firstPosition || !secondPosition) {
+      return first.id.localeCompare(second.id);
+    }
+
+    const firstCenterDistance = Math.abs(firstPosition.x - centerX);
+    const secondCenterDistance = Math.abs(secondPosition.x - centerX);
+    const firstHomeDistance = Math.abs(firstPosition.y - homeY);
+    const secondHomeDistance = Math.abs(secondPosition.y - homeY);
+
+    return (
+      firstCenterDistance - secondCenterDistance ||
+      firstHomeDistance - secondHomeDistance ||
+      firstPosition.x - secondPosition.x
+    );
+  })[0];
 }
 
 function createMovePattern(

@@ -20,6 +20,7 @@ type CellProps = {
   tokenMoved: boolean;
   tokenMovingAway: boolean;
   tokenFixed: boolean;
+  openingRevealAnimalId?: AnimalType;
   onCellClick: () => void;
   onTokenSelect: () => void;
 };
@@ -37,6 +38,7 @@ export function Cell({
   tokenMoved,
   tokenMovingAway,
   tokenFixed,
+  openingRevealAnimalId,
   onCellClick,
   onTokenSelect
 }: CellProps) {
@@ -86,6 +88,7 @@ export function Cell({
           moved={tokenMoved}
           movingAway={tokenMovingAway}
           fixedNow={tokenFixed}
+          openingRevealAnimalId={openingRevealAnimalId}
           animationCueId={animationCueId}
           onSelect={onTokenSelect}
         />
