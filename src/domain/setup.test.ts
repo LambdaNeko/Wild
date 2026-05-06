@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { defaultGameDefinition } from "../game-definitions/grass5x5";
+import {
+  defaultGameDefinition,
+  gameDefinitions
+} from "../game-definitions/grass5x5";
 import { createInitialState, validateGameDefinition } from "./setup";
 import type { GameDefinition } from "./types";
 
@@ -12,6 +15,20 @@ describe("GameDefinition", () => {
     expect(state.tokens[0].candidates).toEqual(
       defaultGameDefinition.animals.map((animal) => animal.id)
     );
+  });
+
+  it("全ステージの初期状態を生成できる", () => {
+    expect(gameDefinitions).toHaveLength(10);
+
+    for (const definition of gameDefinitions) {
+      const state = createInitialState(definition);
+      const animalCount = definition.animals.reduce(
+        (sum, animal) => sum + animal.count,
+        0
+      );
+
+      expect(state.tokens).toHaveLength(animalCount * definition.players.length);
+    }
   });
 
   it("盤面サイズを設定から変更できる", () => {

@@ -12,17 +12,18 @@ import { getAnimalDefinition, getPlayerDefinition } from "./domain/selectors";
 import type {
   AnimalType,
   Direction,
+  GameDefinition,
   GameState,
   Position,
   QuantumToken
 } from "./domain/types";
-import { defaultGameDefinition } from "./game-definitions/grass5x5";
+import { gameDefinitions } from "./game-definitions/grass5x5";
 import { Board } from "./ui/Board";
 import { CandidateList, type CandidateMovePattern } from "./ui/CandidateList";
 import { Hand } from "./ui/Hand";
 import { MoveHistory } from "./ui/MoveHistory";
 
-const createGame = () => createInitialState(defaultGameDefinition);
+const createGame = (definition: GameDefinition) => createInitialState(definition);
 const NPC_PLAYER = "B";
 const NPC_DELAY_MS = 450;
 const ANIMATION_CUE_MS = 720;
@@ -54,8 +55,16 @@ const vectorArrowLabels: Record<string, string> = {
   "-1,-1": "↖"
 };
 
+function getStageDisplayName(definition: GameDefinition) {
+  return definition.name
+    .replace(/^ステージ \d+ /, "")
+    .replace(/\s+\d+x\d+$/, "");
+}
+
 export default function App() {
-  const [state, setState] = useState<GameState>(() => createGame());
+  const [screen, setScreen] = useState<"stageSelect" | "game">("stageSelect");
+  const [selectedStageId, setSelectedStageId] = useState(gameDefinitions[0].id);
+  const [state, setState] = useState<GameState>(() => createGame(gameDefinitions[0]));
   const [selectedTokenId, setSelectedTokenId] = useState<string | null>(null);
   const [activeCandidate, setActiveCandidate] = useState<AnimalType | null>(null);
   const [npcStrength, setNpcStrength] = useState<NpcStrength>("medium");
@@ -70,6 +79,7 @@ export default function App() {
   }, []);
 
   const isNpcTurn = state.turn === NPC_PLAYER && !state.winner;
+  const selectedStage = state.definition;
 
   function queueAnimationCue(
     previousState: GameState,
@@ -247,15 +257,90 @@ export default function App() {
   }
 
   function reset() {
-    setState(createGame());
+    setState(createGame(selectedStage));
     setSelectedTokenId(null);
     setActiveCandidate(null);
     setMessage("");
     setAnimationCue(null);
   }
 
+  function selectStage(definition: GameDefinition) {
+    setSelectedStageId(definition.id);
+    setState(createGame(definition));
+    setSelectedTokenId(null);
+    setActiveCandidate(null);
+    setMessage("");
+    setAnimationCue(null);
+    setScreen("game");
+  }
+
+  function returnToStageSelect() {
+    setSelectedTokenId(null);
+    setActiveCandidate(null);
+    setMessage("");
+    setAnimationCue(null);
+    setScreen("stageSelect");
+  }
+
+  if (screen === "stageSelect") {
+    return (
+      <main className="app-shell stage-screen-shell">
+        <section className="stage-select stage-select-screen" aria-label="ステージ選択">
+          <div className="stage-select-header">
+            <h1>ステージ選択</h1>
+          </div>
+          <div className="stage-settings">
+            <h2>NPC強さ</h2>
+            <div className="segmented-control" aria-label="NPC強さ">
+              {(Object.keys(npcStrengthLabels) as NpcStrength[]).map((strength) => (
+                <button
+                  className={strength === npcStrength ? "active" : ""}
+                  key={strength}
+                  type="button"
+                  onClick={() => setNpcStrength(strength)}
+                >
+                  {npcStrengthLabels[strength]}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="stage-list">
+            {gameDefinitions.map((definition, index) => (
+              <button
+                className={`stage-button ${
+                  definition.id === selectedStageId ? "active" : ""
+                }`}
+                key={definition.id}
+                type="button"
+                onClick={() => selectStage(definition)}
+              >
+                <span className="stage-number">{index + 1}</span>
+                <span className="stage-name">
+                  {getStageDisplayName(definition)}
+                </span>
+                <span className="stage-meta">
+                  {definition.board.width}x{definition.board.height} / 駒
+                  {definition.animals.length}
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main className="app-shell">
+      <header className="game-header">
+        <div className="game-title-line">
+          <h1>{getStageDisplayName(selectedStage)}</h1>
+          <span className="stage-current">
+            {selectedStage.board.width}x{selectedStage.board.height} / 駒
+            {selectedStage.animals.length}
+          </span>
+        </div>
+      </header>
       <section className="game-layout">
         <div className="board-column">
           <Hand
@@ -313,18 +398,9 @@ export default function App() {
       </section>
 
       <div className="bottom-actions">
-        <div className="segmented-control" aria-label="NPC強さ">
-          {(Object.keys(npcStrengthLabels) as NpcStrength[]).map((strength) => (
-            <button
-              className={strength === npcStrength ? "active" : ""}
-              key={strength}
-              type="button"
-              onClick={() => setNpcStrength(strength)}
-            >
-              {npcStrengthLabels[strength]}
-            </button>
-          ))}
-        </div>
+        <button className="stage-return-button" type="button" onClick={returnToStageSelect}>
+          ステージ選択
+        </button>
         <button className="reset-button" type="button" onClick={reset}>
           ↻ リセット
         </button>
