@@ -217,21 +217,6 @@ h2 {
   pointer-events: none;
 }
 
-.token::after {
-  position: absolute;
-  right: 7px;
-  bottom: 7px;
-  z-index: 3;
-  width: clamp(20px, 4.2vw, 30px);
-  height: clamp(7px, 1.5vw, 10px);
-  border: 1px solid rgba(255, 255, 255, 0.72);
-  border-radius: 999px;
-  background: var(--camp-color);
-  box-shadow: 0 2px 5px var(--camp-shadow);
-  content: "";
-  pointer-events: none;
-}
-
 .token.owner-a {
   --camp-color: #f45b4f;
   --camp-glow: rgba(255, 111, 86, 0.62);
@@ -268,34 +253,6 @@ h2 {
 .mystery-art {
   width: 118%;
   height: 118%;
-}
-
-.token-owner {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  z-index: 4;
-  display: grid;
-  width: clamp(18px, 3.4vw, 25px);
-  aspect-ratio: 1;
-  place-items: center;
-  border: 2px solid rgba(255, 255, 255, 0.88);
-  border-radius: 999px;
-  color: #ffffff;
-  font-size: clamp(0.62rem, 1.5vw, 0.78rem);
-  font-weight: 900;
-  line-height: 1;
-  box-shadow:
-    0 2px 5px rgba(44, 43, 22, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.36);
-}
-
-.token.owner-a .token-owner {
-  background: #f45b4f;
-}
-
-.token.owner-b .token-owner {
-  background: #2487c9;
 }
 
 .token-candidates {
@@ -458,11 +415,6 @@ h2 {
 .hand-token .token-art {
   width: 116%;
   height: 116%;
-}
-
-.hand-token .token-owner {
-  width: 19px;
-  font-size: 0.62rem;
 }
 
 .hand-token .token-candidates {
@@ -758,13 +710,6 @@ h2 {
 
   .hand-token {
     width: 42px;
-  }
-
-  .token-owner {
-    top: 2px;
-    left: 2px;
-    width: 18px;
-    border-width: 1px;
   }
 
   .token-candidates {

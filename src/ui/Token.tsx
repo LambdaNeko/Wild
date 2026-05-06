@@ -19,6 +19,8 @@ export function Token({ token, animals, selected, onSelect }: TokenProps) {
         animals.find((animal) => animal.id === candidate)?.displayName ?? candidate
     )
     .join("/");
+  const facing =
+    token.currentOwner === "A" && token.location === "board" ? "back" : "front";
 
   return (
     <button
@@ -35,7 +37,7 @@ export function Token({ token, animals, selected, onSelect }: TokenProps) {
             animalId={fixedAnimal.id}
             label={fixedAnimal.displayName}
             className="token-art"
-            facing={token.currentOwner === "A" ? "back" : "front"}
+            facing={facing}
           />
         ) : (
           <img
@@ -45,9 +47,6 @@ export function Token({ token, animals, selected, onSelect }: TokenProps) {
             draggable={false}
           />
         )}
-      </span>
-      <span className="token-owner" aria-hidden="true">
-        {token.currentOwner}
       </span>
       {!fixedAnimal && (
         <span className="token-candidates" aria-label={`候補 ${token.candidates.length} 種類`}>
