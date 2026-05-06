@@ -41,6 +41,12 @@ p {
   margin: 0;
 }
 
+h1 {
+  color: #24311b;
+  font-size: 1.18rem;
+  line-height: 1.1;
+}
+
 h2 {
   color: #35451f;
   font-size: 0.98rem;
@@ -50,6 +56,136 @@ h2 {
   width: min(1180px, calc(100vw - 28px));
   margin: 0 auto;
   padding: 14px 0 16px;
+}
+
+.stage-screen-shell {
+  display: grid;
+  min-height: 100vh;
+  align-items: center;
+  padding: 18px 0;
+}
+
+.stage-select {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.stage-select-screen {
+  width: 100%;
+  margin-bottom: 0;
+}
+
+.stage-select-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.stage-current {
+  min-width: 0;
+  color: #35451f;
+  font-size: 0.9rem;
+  font-weight: 900;
+  line-height: 1.2;
+  text-align: right;
+}
+
+.game-header {
+  margin-bottom: 12px;
+}
+
+.game-title-line {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.game-title-line .stage-current {
+  text-align: left;
+  white-space: nowrap;
+}
+
+.stage-settings {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.stage-settings h2 {
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.stage-list {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.stage-button {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  min-height: 64px;
+  align-items: center;
+  gap: 6px 8px;
+  padding: 8px;
+  border: 1px solid rgba(107, 82, 31, 0.28);
+  border-radius: 8px;
+  color: #2b3a26;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.74), rgba(245, 255, 207, 0.5)),
+    rgba(255, 253, 234, 0.68);
+  box-shadow:
+    0 8px 20px rgba(69, 70, 24, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.68);
+  cursor: pointer;
+  text-align: left;
+}
+
+.stage-button.active {
+  border-color: rgba(255, 212, 84, 0.95);
+  background:
+    linear-gradient(180deg, rgba(255, 247, 182, 0.92), rgba(203, 239, 132, 0.86)),
+    rgba(255, 253, 234, 0.76);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 189, 63, 0.6),
+    0 10px 22px rgba(69, 70, 24, 0.13);
+}
+
+.stage-number {
+  grid-row: span 2;
+  display: grid;
+  width: 30px;
+  aspect-ratio: 1;
+  place-items: center;
+  border-radius: 999px;
+  color: #ffffff;
+  background: #2f8a4c;
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
+.stage-name,
+.stage-meta {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stage-name {
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
+.stage-meta {
+  color: #5c6d38;
+  font-size: 0.76rem;
+  font-weight: 800;
 }
 
 .game-layout {
@@ -71,7 +207,7 @@ h2 {
 }
 
 .board {
-  --board-gap: clamp(4px, 0.9vw, 8px);
+  --board-gap: 1px;
   --board-padding: clamp(8px, 1.5vw, 14px);
   position: relative;
   display: grid;
@@ -80,11 +216,11 @@ h2 {
   gap: var(--board-gap);
   padding: var(--board-padding);
   border: 6px solid rgba(126, 79, 34, 0.95);
-  border-radius: 8px;
+  border-radius: 4px;
   background:
-    radial-gradient(circle at 18% 12%, rgba(255, 239, 148, 0.34), transparent 13rem),
-    linear-gradient(135deg, rgba(255, 213, 120, 0.48), rgba(116, 70, 25, 0.2)),
-    #9b682f;
+    radial-gradient(circle at 18% 12%, rgba(255, 239, 148, 0.26), transparent 13rem),
+    linear-gradient(135deg, rgba(122, 187, 74, 0.34), rgba(74, 129, 58, 0.22)),
+    #6f9f47;
   box-shadow:
     0 20px 38px rgba(43, 61, 20, 0.28),
     inset 0 0 0 2px rgba(255, 241, 168, 0.42),
@@ -124,14 +260,14 @@ h2 {
   min-width: 0;
   min-height: 0;
   place-items: center;
-  border: 1px solid rgba(91, 142, 49, 0.48);
-  border-radius: 8px;
+  border: 0;
+  border-radius: 3px;
   background:
-    radial-gradient(circle at 26% 18%, rgba(255, 255, 188, 0.72), transparent 24%),
-    linear-gradient(160deg, #bdf279 0%, #75c957 54%, #509f45 100%);
+    linear-gradient(180deg, rgba(255, 255, 214, 0.18), rgba(49, 126, 48, 0.08)),
+    var(--meadow-cell-texture) center / cover;
   box-shadow:
-    inset 0 2px 0 rgba(255, 255, 204, 0.42),
-    inset 0 -4px 10px rgba(30, 98, 40, 0.2);
+    inset 0 1px 0 rgba(255, 255, 204, 0.18),
+    inset 0 -4px 10px rgba(30, 98, 40, 0.14);
   cursor: pointer;
   overflow: hidden;
 }
@@ -140,10 +276,10 @@ h2 {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(115deg, transparent 0 32%, rgba(255, 255, 255, 0.12) 33% 34%, transparent 35%),
-    linear-gradient(42deg, transparent 0 45%, rgba(31, 109, 34, 0.16) 46% 48%, transparent 49%);
+    radial-gradient(circle at 24% 18%, rgba(255, 255, 210, 0.22), transparent 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(30, 91, 34, 0.08));
   content: "";
-  opacity: 0.34;
+  opacity: 0.62;
   pointer-events: none;
 }
 
@@ -857,10 +993,89 @@ h2 {
   font-weight: 900;
 }
 
+.stage-return-button {
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid rgba(107, 82, 31, 0.28);
+  border-radius: 8px;
+  color: #ffffff;
+  background: linear-gradient(180deg, #35a75e, #258347);
+  box-shadow:
+    0 8px 20px rgba(69, 70, 24, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.36);
+  cursor: pointer;
+  font-weight: 900;
+}
+
 @media (max-width: 760px) {
   .app-shell {
     width: min(100vw - 18px, 620px);
     padding: 7px 0 10px;
+  }
+
+  .stage-screen-shell {
+    min-height: 100vh;
+    padding: 10px 0;
+  }
+
+  .stage-select {
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .stage-select-header {
+    align-items: start;
+  }
+
+  h1 {
+    font-size: 1rem;
+  }
+
+  .stage-current {
+    font-size: 0.78rem;
+  }
+
+  .game-title-line {
+    gap: 8px;
+  }
+
+  .stage-settings {
+    justify-content: space-between;
+  }
+
+  .stage-settings h2 {
+    font-size: 0.82rem;
+  }
+
+  .stage-return-button {
+    min-height: 38px;
+    padding: 0 10px;
+    font-size: 0.82rem;
+    white-space: nowrap;
+  }
+
+  .stage-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .stage-button {
+    min-height: 54px;
+    grid-template-columns: 26px minmax(0, 1fr);
+    padding: 6px;
+  }
+
+  .stage-number {
+    width: 26px;
+    font-size: 0.8rem;
+  }
+
+  .stage-name {
+    font-size: 0.82rem;
+  }
+
+  .stage-meta {
+    font-size: 0.7rem;
   }
 
   .game-layout {
@@ -885,7 +1100,7 @@ h2 {
   }
 
   .cell {
-    border-radius: 7px;
+    border-radius: 3px;
   }
 
   .panel {
