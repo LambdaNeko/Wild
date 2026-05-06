@@ -49,7 +49,7 @@ export function Cell({
       {legal && <span className="legal-dot" />}
       {legal && moveAnimals.length > 0 && (
         <span className="move-animals">
-          {moveAnimals.slice(0, 4).map((animalId) => {
+          {moveAnimals.map((animalId) => {
             const animal = animals.find((item) => item.id === animalId);
             return (
               <AnimalIcon

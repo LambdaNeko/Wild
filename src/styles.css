@@ -146,11 +146,11 @@ h2 {
   bottom: 3px;
   z-index: 3;
   display: inline-flex;
-  max-width: calc(100% - 6px);
-  min-height: 24px;
+  max-width: calc(100% - 5px);
+  min-height: 22px;
   align-items: center;
   gap: 0;
-  padding: 1px 4px;
+  padding: 1px 3px;
   overflow: hidden;
   border: 1px solid rgba(67, 117, 35, 0.36);
   border-radius: 999px;
@@ -159,10 +159,14 @@ h2 {
 }
 
 .move-animal-icon {
-  width: clamp(18px, 3.2vw, 24px);
+  width: clamp(15px, 2.5vw, 20px);
   aspect-ratio: 1;
   object-fit: contain;
   filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.7));
+}
+
+.move-animal-icon + .move-animal-icon {
+  margin-left: clamp(-7px, -0.9vw, -4px);
 }
 
 .token {
@@ -770,12 +774,16 @@ h2 {
   }
 
   .move-animals {
-    min-height: 19px;
-    padding: 0 3px;
+    min-height: 18px;
+    padding: 0 2px;
   }
 
   .move-animal-icon {
-    width: 17px;
+    width: 15px;
+  }
+
+  .move-animal-icon + .move-animal-icon {
+    margin-left: -6px;
   }
 
   .bottom-actions {
