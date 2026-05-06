@@ -26,6 +26,10 @@ type MovingTokenStyle = CSSProperties & {
   gridRow: number;
 };
 
+type BoardStyle = CSSProperties & {
+  "--meadow-cell-texture": string;
+};
+
 type BoardProps = {
   state: GameState;
   selectedTokenId: string | null;
@@ -56,16 +60,18 @@ export function Board({
   const movingTokenStyle =
     animationCue?.from && animationCue.movingToken
       ? createMovingTokenStyle(animationCue.from, animationCue.to)
-    : null;
+      : null;
+  const boardStyle: BoardStyle = {
+    "--meadow-cell-texture": `url("${import.meta.env.BASE_URL}assets/ui/meadow-cell-texture.png")`,
+    aspectRatio: `${boardWidth} / ${boardHeight}`,
+    gridTemplateColumns: `repeat(${state.definition.board.width}, minmax(0, 1fr))`,
+    gridTemplateRows: `repeat(${state.definition.board.height}, minmax(0, 1fr))`
+  };
 
   return (
     <div
       className="board"
-      style={{
-        aspectRatio: `${boardWidth} / ${boardHeight}`,
-        gridTemplateColumns: `repeat(${state.definition.board.width}, minmax(0, 1fr))`,
-        gridTemplateRows: `repeat(${state.definition.board.height}, minmax(0, 1fr))`
-      }}
+      style={boardStyle}
     >
       {movingTokenStyle && animationCue?.movingToken && (
         <div
