@@ -36,6 +36,7 @@ type BoardProps = {
   legalMoves: Position[];
   legalMoveHints: LegalMoveHint[];
   animationCue: AnimationCue | null;
+  openingRevealTokens: Record<string, AnimalType>;
   onCellClick: (position: Position) => void;
   onTokenSelect: (tokenId: string) => void;
 };
@@ -46,6 +47,7 @@ export function Board({
   legalMoves,
   legalMoveHints,
   animationCue,
+  openingRevealTokens,
   onCellClick,
   onTokenSelect
 }: BoardProps) {
@@ -134,6 +136,7 @@ export function Board({
             tokenFixed={Boolean(
               token && animationCue?.fixedTokenIds.includes(token.id)
             )}
+            openingRevealAnimalId={token ? openingRevealTokens[token.id] : undefined}
             onCellClick={() => onCellClick(position)}
             onTokenSelect={() => token && onTokenSelect(token.id)}
           />
