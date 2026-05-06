@@ -8,10 +8,18 @@ import {
   narrowCandidatesByMove,
   resolveWinnerByKingCandidates
 } from "./domain/rules";
-import type { GameDefinition, GameState, Position, QuantumToken } from "./domain/types";
+import { getAnimalDefinition, getPlayerDefinition } from "./domain/selectors";
+import type {
+  AnimalType,
+  Direction,
+  GameDefinition,
+  GameState,
+  Position,
+  QuantumToken
+} from "./domain/types";
 import { gameDefinitions } from "./game-definitions/grass5x5";
 import { Board } from "./ui/Board";
-import { CandidateList } from "./ui/CandidateList";
+import { CandidateList, type CandidateMovePattern } from "./ui/CandidateList";
 import { Hand } from "./ui/Hand";
 import { MoveHistory } from "./ui/MoveHistory";
 
@@ -36,6 +44,17 @@ const npcStrengthLabels: Record<NpcStrength, string> = {
   strong: "強"
 };
 
+const vectorArrowLabels: Record<string, string> = {
+  "0,-1": "↑",
+  "1,-1": "↗",
+  "1,0": "→",
+  "1,1": "↘",
+  "0,1": "↓",
+  "-1,1": "↙",
+  "-1,0": "←",
+  "-1,-1": "↖"
+};
+
 function getStageDisplayName(definition: GameDefinition) {
   return definition.name
     .replace(/^ステージ \d+ /, "")
@@ -47,6 +66,7 @@ export default function App() {
   const [selectedStageId, setSelectedStageId] = useState(gameDefinitions[0].id);
   const [state, setState] = useState<GameState>(() => createGame(gameDefinitions[0]));
   const [selectedTokenId, setSelectedTokenId] = useState<string | null>(null);
+  const [activeCandidate, setActiveCandidate] = useState<AnimalType | null>(null);
   const [npcStrength, setNpcStrength] = useState<NpcStrength>("medium");
   const [message, setMessage] = useState<string>("");
   const [animationCue, setAnimationCue] = useState<AnimationCue | null>(null);
@@ -117,6 +137,7 @@ export default function App() {
     }
 
     setSelectedTokenId(null);
+    setActiveCandidate(null);
     setMessage("NPC思考中");
 
     const timer = window.setTimeout(() => {
@@ -167,6 +188,13 @@ export default function App() {
       )
     }));
   }, [legalMoves, selectedToken, state]);
+  const selectedCandidateMovePattern = useMemo(() => {
+    if (!selectedToken || !activeCandidate) {
+      return null;
+    }
+
+    return createMovePattern(state, selectedToken, activeCandidate);
+  }, [activeCandidate, selectedToken, state]);
 
   function selectToken(tokenId: string) {
     if (isNpcTurn) {
@@ -176,10 +204,12 @@ export default function App() {
     const token = state.tokens.find((item) => item.id === tokenId);
     if (!token || token.currentOwner !== state.turn || state.winner) {
       setSelectedTokenId(tokenId);
+      setActiveCandidate(null);
       setMessage("");
       return;
     }
     setSelectedTokenId(tokenId);
+    setActiveCandidate(null);
     setMessage("");
   }
 
@@ -222,12 +252,14 @@ export default function App() {
     );
     setState(result.state);
     setSelectedTokenId(null);
+    setActiveCandidate(null);
     setMessage("");
   }
 
   function reset() {
     setState(createGame(selectedStage));
     setSelectedTokenId(null);
+    setActiveCandidate(null);
     setMessage("");
     setAnimationCue(null);
   }
@@ -236,6 +268,7 @@ export default function App() {
     setSelectedStageId(definition.id);
     setState(createGame(definition));
     setSelectedTokenId(null);
+    setActiveCandidate(null);
     setMessage("");
     setAnimationCue(null);
     setScreen("game");
@@ -243,6 +276,7 @@ export default function App() {
 
   function returnToStageSelect() {
     setSelectedTokenId(null);
+    setActiveCandidate(null);
     setMessage("");
     setAnimationCue(null);
     setScreen("stageSelect");
@@ -345,7 +379,17 @@ export default function App() {
         </div>
 
         <aside className="side-panel">
-          <CandidateList token={selectedToken} animals={state.definition.animals} />
+          <CandidateList
+            token={selectedToken}
+            animals={state.definition.animals}
+            activeCandidate={activeCandidate}
+            movePattern={selectedCandidateMovePattern}
+            onCandidateSelect={(candidate) =>
+              setActiveCandidate((current) =>
+                current === candidate ? null : candidate
+              )
+            }
+          />
           <MoveHistory
             records={state.moveHistory}
             animals={state.definition.animals}
@@ -363,4 +407,76 @@ export default function App() {
       </div>
     </main>
   );
+}
+
+function createMovePattern(
+  state: GameState,
+  token: QuantumToken,
+  candidate: AnimalType
+): CandidateMovePattern {
+  const animal = getAnimalDefinition(state, candidate);
+  const forwardY = getPlayerDefinition(state, token.currentOwner).forwardY;
+  const movement = animal.movement;
+  const cells: CandidateMovePattern["cells"] = [];
+
+  if (movement.type === "jump") {
+    movement.offsets.forEach((offset) => {
+      addPatternCell(cells, offset.dx, offset.dy * forwardY);
+    });
+    return { cells };
+  }
+
+  movement.directions.forEach((direction) => {
+    const vector = directionToVector(direction, forwardY);
+    const maxDistance =
+      movement.type === "slide"
+        ? 2
+        : Math.min(movement.maxDistance, 2);
+
+    for (let distance = 1; distance <= maxDistance; distance += 1) {
+      addPatternCell(cells, vector.dx * distance, vector.dy * distance);
+    }
+  });
+
+  return { cells };
+}
+
+function addPatternCell(
+  cells: CandidateMovePattern["cells"],
+  dx: number,
+  dy: number
+) {
+  const x = 2 + dx;
+  const y = 2 + dy;
+
+  if (x < 0 || y < 0 || x > 4 || y > 4) {
+    return;
+  }
+
+  const arrow = vectorArrowLabels[`${Math.sign(dx)},${Math.sign(dy)}`] ?? "";
+  if (!cells.some((cell) => cell.x === x && cell.y === y)) {
+    cells.push({ x, y, arrow });
+  }
+}
+
+function directionToVector(direction: Direction, forwardY: 1 | -1) {
+  const backwardY = (forwardY * -1) as 1 | -1;
+  switch (direction) {
+    case "forward":
+      return { dx: 0, dy: forwardY };
+    case "backward":
+      return { dx: 0, dy: backwardY };
+    case "left":
+      return { dx: -1, dy: 0 };
+    case "right":
+      return { dx: 1, dy: 0 };
+    case "forwardLeft":
+      return { dx: -1, dy: forwardY };
+    case "forwardRight":
+      return { dx: 1, dy: forwardY };
+    case "backwardLeft":
+      return { dx: -1, dy: backwardY };
+    case "backwardRight":
+      return { dx: 1, dy: backwardY };
+  }
 }
