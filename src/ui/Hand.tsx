@@ -35,6 +35,10 @@ export function Hand({
                 token={token}
                 animals={animals}
                 selected={token.id === selectedTokenId}
+                moved={false}
+                movingAway={false}
+                fixedNow={false}
+                animationCueId={null}
                 onSelect={() => onTokenSelect(token.id)}
               />
             </div>

@@ -14,6 +14,12 @@ type CellProps = {
   selected: boolean;
   legal: boolean;
   moveAnimals: AnimalType[];
+  animationCueId: number | null;
+  animated: boolean;
+  actionType: "move" | "drop" | null;
+  tokenMoved: boolean;
+  tokenMovingAway: boolean;
+  tokenFixed: boolean;
   onCellClick: () => void;
   onTokenSelect: () => void;
 };
@@ -25,6 +31,12 @@ export function Cell({
   selected,
   legal,
   moveAnimals,
+  animationCueId,
+  animated,
+  actionType,
+  tokenMoved,
+  tokenMovingAway,
+  tokenFixed,
   onCellClick,
   onTokenSelect
 }: CellProps) {
@@ -34,7 +46,9 @@ export function Cell({
 
   return (
     <div
-      className={`cell ${legal ? "legal" : ""}`}
+      className={`cell ${legal ? "legal" : ""} ${animated ? "cell-action" : ""} ${
+        actionType ? `cell-action-${actionType}` : ""
+      }`}
       role="button"
       tabIndex={0}
       onClick={activateCell}
@@ -46,6 +60,7 @@ export function Cell({
       }}
       aria-label={`${position.x + 1},${position.y + 1}`}
     >
+      {animated && <span className="action-burst" key={animationCueId ?? "burst"} />}
       {legal && <span className="legal-dot" />}
       {legal && moveAnimals.length > 0 && (
         <span className="move-animals">
@@ -68,6 +83,10 @@ export function Cell({
           token={token}
           animals={animals}
           selected={selected}
+          moved={tokenMoved}
+          movingAway={tokenMovingAway}
+          fixedNow={tokenFixed}
+          animationCueId={animationCueId}
           onSelect={onTokenSelect}
         />
       )}

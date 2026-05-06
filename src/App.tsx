@@ -8,7 +8,7 @@ import {
   narrowCandidatesByMove,
   resolveWinnerByKingCandidates
 } from "./domain/rules";
-import type { GameState, Position } from "./domain/types";
+import type { GameState, Position, QuantumToken } from "./domain/types";
 import { defaultGameDefinition } from "./game-definitions/grass5x5";
 import { Board } from "./ui/Board";
 import { CandidateList } from "./ui/CandidateList";
@@ -18,6 +18,17 @@ import { MoveHistory } from "./ui/MoveHistory";
 const createGame = () => createInitialState(defaultGameDefinition);
 const NPC_PLAYER = "B";
 const NPC_DELAY_MS = 450;
+const ANIMATION_CUE_MS = 720;
+
+type AnimationCue = {
+  id: number;
+  movedTokenId: string;
+  from: Position | null;
+  to: Position;
+  actionType: "move" | "drop";
+  movingToken: QuantumToken | null;
+  fixedTokenIds: string[];
+};
 
 const npcStrengthLabels: Record<NpcStrength, string> = {
   weak: "弱",
@@ -30,6 +41,7 @@ export default function App() {
   const [selectedTokenId, setSelectedTokenId] = useState<string | null>(null);
   const [npcStrength, setNpcStrength] = useState<NpcStrength>("medium");
   const [message, setMessage] = useState<string>("");
+  const [animationCue, setAnimationCue] = useState<AnimationCue | null>(null);
 
   useEffect(() => {
     setState((currentState) => {
@@ -39,6 +51,56 @@ export default function App() {
   }, []);
 
   const isNpcTurn = state.turn === NPC_PLAYER && !state.winner;
+
+  function queueAnimationCue(
+    previousState: GameState,
+    nextState: GameState,
+    movedTokenId: string,
+    to: Position,
+    actionType: AnimationCue["actionType"]
+  ) {
+    const previousToken = previousState.tokens.find(
+      (token) => token.id === movedTokenId
+    );
+    const nextToken =
+      nextState.tokens.find((token) => token.id === movedTokenId) ?? null;
+    const fixedTokenIds = nextState.tokens
+      .filter((token) => {
+        const previousToken = previousState.tokens.find((item) => item.id === token.id);
+        return (
+          previousToken &&
+          previousToken.candidates.length > 1 &&
+          token.candidates.length === 1
+        );
+      })
+      .map((token) => token.id);
+
+    setAnimationCue({
+      id: window.performance.now(),
+      movedTokenId,
+      from: actionType === "move" ? (previousToken?.position ?? null) : null,
+      to,
+      actionType,
+      movingToken:
+        actionType === "move" && nextToken
+          ? {
+              ...nextToken,
+              location: "board",
+              position: previousToken?.position ?? null
+            }
+          : null,
+      fixedTokenIds
+    });
+  }
+
+  useEffect(() => {
+    if (!animationCue) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => setAnimationCue(null), ANIMATION_CUE_MS);
+    return () => window.clearTimeout(timer);
+  }, [animationCue]);
 
   useEffect(() => {
     if (!isNpcTurn) {
@@ -61,6 +123,7 @@ export default function App() {
         return;
       }
 
+      queueAnimationCue(state, result.state, action.tokenId, action.to, action.type);
       setState(result.state);
       setMessage("");
     }, NPC_DELAY_MS);
@@ -141,6 +204,13 @@ export default function App() {
       return;
     }
 
+    queueAnimationCue(
+      state,
+      result.state,
+      selectedTokenId,
+      position,
+      selectedToken?.location === "hand" ? "drop" : "move"
+    );
     setState(result.state);
     setSelectedTokenId(null);
     setMessage("");
@@ -150,6 +220,7 @@ export default function App() {
     setState(createGame());
     setSelectedTokenId(null);
     setMessage("");
+    setAnimationCue(null);
   }
 
   return (
@@ -170,6 +241,7 @@ export default function App() {
               selectedTokenId={selectedTokenId}
               legalMoves={legalTargets}
               legalMoveHints={legalMoveHints}
+              animationCue={animationCue}
               onCellClick={clickCell}
               onTokenSelect={selectToken}
             />
