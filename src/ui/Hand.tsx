@@ -24,7 +24,7 @@ export function Hand({
 
   return (
     <section className={`panel hand-panel ${active ? "active-turn" : ""}`}>
-      <h2>{owner} の持ち駒</h2>
+      <h2>{owner} の草むら</h2>
       {handTokens.length === 0 ? (
         <p className="muted">なし</p>
       ) : (

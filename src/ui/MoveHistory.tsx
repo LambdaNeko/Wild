@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { AnimalDefinition, MoveRecord, Position } from "../domain/types";
+import { AnimalIcon } from "./AnimalIcon";
 
 type MoveHistoryProps = {
   records: MoveRecord[];
@@ -39,7 +40,20 @@ export function MoveHistory({ records, animals }: MoveHistoryProps) {
                 )}
                 {record.narrowedTo && (
                   <span className="move-candidates">
-                    {formatCandidates(record.narrowedTo, animals)}
+                    {record.narrowedTo.length === 0
+                      ? "候補なし"
+                      : record.narrowedTo.map((candidate) => {
+                          const animal = animals.find((item) => item.id === candidate);
+                          return (
+                            <AnimalIcon
+                              animalId={candidate}
+                              className="history-animal-icon"
+                              decorative
+                              key={candidate}
+                              label={animal?.displayName ?? candidate}
+                            />
+                          );
+                        })}
                   </span>
                 )}
               </div>
@@ -53,20 +67,4 @@ export function MoveHistory({ records, animals }: MoveHistoryProps) {
 
 function formatPosition(position: Position | null): string {
   return position ? `${position.x + 1},${position.y + 1}` : "持ち駒";
-}
-
-function formatCandidates(
-  candidates: MoveRecord["narrowedTo"],
-  animals: AnimalDefinition[]
-): string {
-  if (!candidates || candidates.length === 0) {
-    return "候補なし";
-  }
-
-  return candidates
-    .map(
-      (candidate) =>
-        animals.find((animal) => animal.id === candidate)?.icon ?? candidate
-    )
-    .join("");
 }
