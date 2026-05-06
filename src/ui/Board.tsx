@@ -62,6 +62,7 @@ export function Board({
     <div
       className="board"
       style={{
+        aspectRatio: `${boardWidth} / ${boardHeight}`,
         gridTemplateColumns: `repeat(${state.definition.board.width}, minmax(0, 1fr))`,
         gridTemplateRows: `repeat(${state.definition.board.height}, minmax(0, 1fr))`
       }}
