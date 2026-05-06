@@ -1,10 +1,29 @@
+import type { CSSProperties } from "react";
 import { getTokenAt } from "../domain/selectors";
-import type { AnimalType, GameState, Position } from "../domain/types";
+import type { AnimalType, GameState, Position, QuantumToken } from "../domain/types";
 import { Cell } from "./Cell";
+import { Token } from "./Token";
 
 type LegalMoveHint = {
   position: Position;
   animals: AnimalType[];
+};
+
+type AnimationCue = {
+  id: number;
+  movedTokenId: string;
+  from: Position | null;
+  to: Position;
+  actionType: "move" | "drop";
+  movingToken: QuantumToken | null;
+  fixedTokenIds: string[];
+};
+
+type MovingTokenStyle = CSSProperties & {
+  "--move-dx": number;
+  "--move-dy": number;
+  gridColumn: number;
+  gridRow: number;
 };
 
 type BoardProps = {
@@ -12,6 +31,7 @@ type BoardProps = {
   selectedTokenId: string | null;
   legalMoves: Position[];
   legalMoveHints: LegalMoveHint[];
+  animationCue: AnimationCue | null;
   onCellClick: (position: Position) => void;
   onTokenSelect: (tokenId: string) => void;
 };
@@ -21,15 +41,22 @@ export function Board({
   selectedTokenId,
   legalMoves,
   legalMoveHints,
+  animationCue,
   onCellClick,
   onTokenSelect
 }: BoardProps) {
+  const boardWidth = state.definition.board.width;
+  const boardHeight = state.definition.board.height;
   const cells: Position[] = [];
-  for (let y = 0; y < state.definition.board.height; y += 1) {
-    for (let x = 0; x < state.definition.board.width; x += 1) {
+  for (let y = 0; y < boardHeight; y += 1) {
+    for (let x = 0; x < boardWidth; x += 1) {
       cells.push({ x, y });
     }
   }
+  const movingTokenStyle =
+    animationCue?.from && animationCue.movingToken
+      ? createMovingTokenStyle(animationCue.from, animationCue.to)
+    : null;
 
   return (
     <div
@@ -39,6 +66,32 @@ export function Board({
         gridTemplateRows: `repeat(${state.definition.board.height}, minmax(0, 1fr))`
       }}
     >
+      {movingTokenStyle && animationCue?.movingToken && (
+        <div
+          className="moving-token-layer"
+          style={{
+            gridTemplateColumns: `repeat(${boardWidth}, minmax(0, 1fr))`,
+            gridTemplateRows: `repeat(${boardHeight}, minmax(0, 1fr))`
+          }}
+        >
+          <div
+            className="moving-token-shell"
+            key={`moving-${animationCue.id}`}
+            style={movingTokenStyle}
+          >
+            <Token
+              token={animationCue.movingToken}
+              animals={state.definition.animals}
+              selected={false}
+              moved={false}
+              movingAway={false}
+              fixedNow={animationCue.fixedTokenIds.includes(animationCue.movedTokenId)}
+              animationCueId={animationCue.id}
+              onSelect={() => undefined}
+            />
+          </div>
+        </div>
+      )}
       {cells.map((position) => {
         const token = getTokenAt(state, position);
         const legal = legalMoves.some(
@@ -47,6 +100,8 @@ export function Board({
         const hint = legalMoveHints.find(
           (move) => move.position.x === position.x && move.position.y === position.y
         );
+        const isCueTarget =
+          animationCue?.to.x === position.x && animationCue.to.y === position.y;
         return (
           <Cell
             key={`${position.x}-${position.y}`}
@@ -56,6 +111,22 @@ export function Board({
             selected={token?.id === selectedTokenId}
             legal={legal}
             moveAnimals={hint?.animals ?? []}
+            animationCueId={animationCue?.id ?? null}
+            animated={isCueTarget}
+            actionType={isCueTarget ? animationCue.actionType : null}
+            tokenMoved={Boolean(
+              token &&
+                token.id === animationCue?.movedTokenId &&
+                animationCue.actionType === "drop"
+            )}
+            tokenMovingAway={Boolean(
+              token &&
+                token.id === animationCue?.movedTokenId &&
+                animationCue.actionType === "move"
+            )}
+            tokenFixed={Boolean(
+              token && animationCue?.fixedTokenIds.includes(token.id)
+            )}
             onCellClick={() => onCellClick(position)}
             onTokenSelect={() => token && onTokenSelect(token.id)}
           />
@@ -63,4 +134,16 @@ export function Board({
       })}
     </div>
   );
+}
+
+function createMovingTokenStyle(
+  from: Position,
+  to: Position
+): MovingTokenStyle {
+  return {
+    "--move-dx": to.x - from.x,
+    "--move-dy": to.y - from.y,
+    gridColumn: from.x + 1,
+    gridRow: from.y + 1
+  };
 }

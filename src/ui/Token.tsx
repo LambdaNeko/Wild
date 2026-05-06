@@ -5,10 +5,23 @@ type TokenProps = {
   token: QuantumToken;
   animals: AnimalDefinition[];
   selected: boolean;
+  moved: boolean;
+  movingAway: boolean;
+  fixedNow: boolean;
+  animationCueId: number | null;
   onSelect: () => void;
 };
 
-export function Token({ token, animals, selected, onSelect }: TokenProps) {
+export function Token({
+  token,
+  animals,
+  selected,
+  moved,
+  movingAway,
+  fixedNow,
+  animationCueId,
+  onSelect
+}: TokenProps) {
   const fixedAnimal =
     token.candidates.length === 1
       ? animals.find((animal) => animal.id === token.candidates[0])
@@ -26,7 +39,10 @@ export function Token({ token, animals, selected, onSelect }: TokenProps) {
     <button
       className={`token owner-${token.currentOwner.toLowerCase()} ${
         selected ? "selected" : ""
-      } ${fixedAnimal ? "fixed" : "mystery-token"}`}
+      } ${fixedAnimal ? "fixed" : "mystery-token"} ${moved ? "moved-now" : ""} ${
+        movingAway ? "moving-away" : ""
+      } ${fixedNow ? "fixed-now" : ""}`}
+      key={`${token.id}-${animationCueId ?? "idle"}-${fixedNow ? "fixed" : "plain"}`}
       type="button"
       onClick={onSelect}
       title={`${token.currentOwner} ${titleAnimals}`}
