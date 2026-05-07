@@ -70,20 +70,35 @@ export function chooseNpcAction(
     return null;
   }
 
-  if (strength === "weak") {
-    return actions[Math.min(Math.floor(random() * actions.length), actions.length - 1)];
-  }
-
   const player = state.turn;
   const scored = actions.map((action) => ({
     action,
-    score:
-      strength === "strong"
-        ? scoreStrongAction(state, action, player)
-        : scoreMediumAction(state, action, player)
+    score: scoreActionByStrength(state, action, player, strength)
   }));
 
+  if (strength === "weak") {
+    return chooseWeightedTopAction(scored, random);
+  }
+
   return chooseHighestScored(scored).action;
+}
+
+
+function scoreActionByStrength(
+  state: GameState,
+  action: GameAction,
+  player: PlayerId,
+  strength: NpcStrength
+): number {
+  if (strength === "weak") {
+    return scoreMediumAction(state, action, player);
+  }
+
+  if (strength === "medium") {
+    return scoreStrongAction(state, action, player);
+  }
+
+  return scoreVeryStrongAction(state, action, player);
 }
 
 function scoreMediumAction(
@@ -144,6 +159,79 @@ function scoreStrongAction(
   );
 
   return worstReplyScore + scoreMediumAction(state, action, player) * 0.05;
+}
+
+
+function scoreVeryStrongAction(
+  state: GameState,
+  action: GameAction,
+  player: PlayerId
+): number {
+  const result = applyAction(state, action);
+  if (!result.ok) {
+    return -WIN_SCORE;
+  }
+
+  if (result.state.winner === player) {
+    return WIN_SCORE;
+  }
+
+  if (result.state.winner) {
+    return -WIN_SCORE;
+  }
+
+  const replies = getLegalActions(result.state);
+  if (replies.length === 0) {
+    return evaluateState(result.state, player);
+  }
+
+  const worstReplyScore = Math.min(
+    ...replies.map((reply) => {
+      const replyResult = applyAction(result.state, reply);
+      if (!replyResult.ok) {
+        return evaluateState(result.state, player);
+      }
+
+      if (replyResult.state.winner && replyResult.state.winner !== player) {
+        return -WIN_SCORE;
+      }
+
+      const followUps = getLegalActions(replyResult.state);
+      if (followUps.length === 0) {
+        return evaluateState(replyResult.state, player);
+      }
+
+      const bestFollowUp = Math.max(
+        ...followUps.map((followUp) => scoreStrongAction(replyResult.state, followUp, player))
+      );
+
+      return bestFollowUp;
+    })
+  );
+
+  return worstReplyScore + scoreStrongAction(state, action, player) * 0.03;
+}
+
+function chooseWeightedTopAction(
+  scored: ScoredAction[],
+  random: () => number
+): GameAction {
+  const sorted = [...scored].sort((left, right) => right.score - left.score);
+  const topN = Math.min(3, sorted.length);
+  const top = sorted.slice(0, topN);
+  const weights = top.map((_, index) => topN - index);
+  const total = weights.reduce((sum, weight) => sum + weight, 0);
+  const target = random() * total;
+
+  let cumulative = 0;
+  for (let index = 0; index < top.length; index += 1) {
+    cumulative += weights[index];
+    if (target <= cumulative) {
+      return top[index].action;
+    }
+  }
+
+  return top[top.length - 1].action;
 }
 
 function chooseHighestScored(scored: ScoredAction[]): ScoredAction {
