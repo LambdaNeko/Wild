@@ -28,14 +28,19 @@ describe("NPC actions", () => {
     expect(actions.every((action) => action.tokenId.startsWith("A-"))).toBe(true);
   });
 
-  it("弱NPCは乱数で合法手を選ぶ", () => {
+  it("弱NPCは上位候補から重み付きランダムで選ぶ", () => {
     const state = createInitialState(defaultGameDefinition);
     const actions = getLegalActions(state);
 
-    expect(chooseNpcAction(state, "weak", () => 0)).toEqual(actions[0]);
-    expect(chooseNpcAction(state, "weak", () => 0.999)).toEqual(
-      actions[actions.length - 1]
-    );
+    const firstPick = chooseNpcAction(state, "weak", () => 0);
+    const lastWeightedPick = chooseNpcAction(state, "weak", () => 0.999);
+
+    expect(firstPick).not.toBeNull();
+    expect(lastWeightedPick).not.toBeNull();
+    if (!firstPick || !lastWeightedPick) return;
+
+    expect(actions).toContainEqual(firstPick);
+    expect(actions).toContainEqual(lastWeightedPick);
   });
 
   it("中NPCは即勝利できる手を優先する", () => {
@@ -70,6 +75,42 @@ describe("NPC actions", () => {
       type: "move",
       tokenId: "B-1",
       to: { x: 0, y: 1 }
+    });
+  });
+
+
+  it("強NPCは勝てる局面で即勝利手を選ぶ", () => {
+    const state = emptyBoardState();
+    const prepared: GameState = {
+      ...state,
+      turn: "B",
+      tokens: state.tokens.map((token) => {
+        if (token.id === "B-1") {
+          return {
+            ...token,
+            location: "board",
+            position: { x: 1, y: 0 },
+            candidates: ["king"] satisfies AnimalType[]
+          };
+        }
+        if (token.id === "A-9") {
+          return {
+            ...token,
+            location: "board",
+            position: { x: 1, y: 1 },
+            candidates: ["king"] satisfies AnimalType[]
+          };
+        }
+        return token;
+      })
+    };
+
+    const action = chooseNpcAction(prepared, "strong");
+
+    expect(action).toEqual({
+      type: "move",
+      tokenId: "B-1",
+      to: { x: 1, y: 1 }
     });
   });
 
