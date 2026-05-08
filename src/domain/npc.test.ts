@@ -110,4 +110,37 @@ describe("NPC actions", () => {
     });
   });
 
+  it("強NPCは持ち駒が多い局面でも合法手を返す", () => {
+    const state = emptyBoardState();
+    const prepared: GameState = {
+      ...state,
+      turn: "B",
+      tokens: state.tokens.map((token) => {
+        if (token.id === "B-1") {
+          return {
+            ...token,
+            location: "board",
+            position: { x: 2, y: 0 },
+            candidates: ["king"] satisfies AnimalType[]
+          };
+        }
+        if (token.id === "A-9") {
+          return {
+            ...token,
+            location: "board",
+            position: { x: 2, y: 4 },
+            candidates: ["king"] satisfies AnimalType[]
+          };
+        }
+        return token;
+      })
+    };
+    const legalActions = getLegalActions(prepared);
+
+    const action = chooseNpcAction(prepared, "strong");
+
+    expect(action).not.toBeNull();
+    expect(legalActions).toContainEqual(action);
+  });
+
 });

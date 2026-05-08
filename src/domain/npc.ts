@@ -19,7 +19,25 @@ type ScoredAction = {
   score: number;
 };
 
+type SearchLimits = {
+  root: number;
+  replies: number;
+  followUps: number;
+};
+
 const WIN_SCORE = 100_000;
+const SEARCH_LIMITS: Record<Exclude<NpcStrength, "weak">, SearchLimits> = {
+  medium: {
+    root: 18,
+    replies: 6,
+    followUps: 0
+  },
+  strong: {
+    root: 12,
+    replies: 6,
+    followUps: 4
+  }
+};
 
 const ANIMAL_VALUES: Record<AnimalType, number> = {
   king: 100,
@@ -71,10 +89,14 @@ export function chooseNpcAction(
   }
 
   const player = state.turn;
-  const scored = actions.map((action) => ({
-    action,
-    score: scoreActionByStrength(state, action, player, strength)
-  }));
+  if (strength !== "weak") {
+    const winningAction = findWinningAction(state, actions, player);
+    if (winningAction) {
+      return winningAction;
+    }
+  }
+
+  const scored = scoreActionsByStrength(state, actions, player, strength);
 
   if (strength === "weak") {
     return chooseWeightedTopAction(scored, random);
@@ -83,140 +105,226 @@ export function chooseNpcAction(
   return chooseHighestScored(scored).action;
 }
 
+function findWinningAction(
+  state: GameState,
+  actions: GameAction[],
+  player: PlayerId
+): GameAction | null {
+  for (const action of actions) {
+    if (action.type !== "move") {
+      continue;
+    }
 
-function scoreActionByStrength(
+    const captured = getTokenAt(state, action.to);
+    if (
+      !captured ||
+      captured.currentOwner === player ||
+      !captured.candidates.includes("king")
+    ) {
+      continue;
+    }
+
+    const result = applyAction(state, action);
+    if (result.ok && result.state.winner === player) {
+      return action;
+    }
+  }
+
+  return null;
+}
+
+function scoreActionsByStrength(
+  state: GameState,
+  actions: GameAction[],
+  player: PlayerId,
+  strength: NpcStrength
+): ScoredAction[] {
+  if (strength === "weak") {
+    return actions.map((action) => ({
+      action,
+      score: scoreTacticalAction(state, action, player)
+    }));
+  }
+
+  const limits = SEARCH_LIMITS[strength];
+  return selectLikelyActions(state, actions, limits.root).map((action) =>
+    scoreSearchAction(state, action, player, limits)
+  );
+}
+
+function scoreSearchAction(
   state: GameState,
   action: GameAction,
   player: PlayerId,
-  strength: NpcStrength
-): number {
-  if (strength === "weak") {
-    return scoreMediumAction(state, action, player);
-  }
-
-  if (strength === "medium") {
-    return scoreStrongAction(state, action, player);
-  }
-
-  return scoreVeryStrongAction(state, action, player);
-}
-
-function scoreMediumAction(
-  state: GameState,
-  action: GameAction,
-  player: PlayerId
-): number {
+  limits: SearchLimits
+): ScoredAction {
   const result = applyAction(state, action);
   if (!result.ok) {
-    return -WIN_SCORE;
+    return { action, score: -WIN_SCORE };
   }
 
   if (result.state.winner === player) {
-    return WIN_SCORE;
+    return { action, score: WIN_SCORE };
   }
 
   if (result.state.winner) {
-    return -WIN_SCORE;
+    return { action, score: -WIN_SCORE };
   }
 
-  return (
-    evaluateState(result.state, player) +
-    getCapturePressure(state, action) * 2 +
-    getDestinationPressure(state, action) * 0.25
-  );
-}
-
-function scoreStrongAction(
-  state: GameState,
-  action: GameAction,
-  player: PlayerId
-): number {
-  const result = applyAction(state, action);
-  if (!result.ok) {
-    return -WIN_SCORE;
-  }
-
-  if (result.state.winner === player) {
-    return WIN_SCORE;
-  }
-
-  if (result.state.winner) {
-    return -WIN_SCORE;
-  }
-
-  const replies = getLegalActions(result.state);
+  const tacticalScore = scoreTacticalResult(state, action, result.state, player);
+  const replies = getLikelyActions(result.state, limits.replies);
   if (replies.length === 0) {
-    return evaluateState(result.state, player);
+    return { action, score: evaluateState(result.state, player) };
   }
 
   const worstReplyScore = Math.min(
-    ...replies.map((reply) => {
-      const replyResult = applyAction(result.state, reply);
-      return replyResult.ok
-        ? evaluateState(replyResult.state, player)
-        : evaluateState(result.state, player);
-    })
-  );
-
-  return worstReplyScore + scoreMediumAction(state, action, player) * 0.05;
-}
-
-
-function scoreVeryStrongAction(
-  state: GameState,
-  action: GameAction,
-  player: PlayerId
-): number {
-  const result = applyAction(state, action);
-  if (!result.ok) {
-    return -WIN_SCORE;
-  }
-
-  if (result.state.winner === player) {
-    return WIN_SCORE;
-  }
-
-  if (result.state.winner) {
-    return -WIN_SCORE;
-  }
-
-  const replies = getLegalActions(result.state);
-  if (replies.length === 0) {
-    return evaluateState(result.state, player);
-  }
-
-  const worstReplyScore = Math.min(
-    ...replies.map((reply) => {
+    ...replies.map(({ action: reply }) => {
       const replyResult = applyAction(result.state, reply);
       if (!replyResult.ok) {
         return evaluateState(result.state, player);
       }
 
-      if (replyResult.state.winner && replyResult.state.winner !== player) {
+      if (replyResult.state.winner === player) {
+        return WIN_SCORE;
+      }
+
+      if (replyResult.state.winner) {
         return -WIN_SCORE;
       }
 
-      const followUps = getLegalActions(replyResult.state);
-      if (followUps.length === 0) {
-        return evaluateState(replyResult.state, player);
-      }
-
-      const bestFollowUp = Math.max(
-        ...followUps.map((followUp) => scoreStrongAction(replyResult.state, followUp, player))
-      );
-
-      return bestFollowUp;
+      return scoreBestFollowUp(replyResult.state, player, limits.followUps);
     })
   );
 
-  return worstReplyScore + scoreStrongAction(state, action, player) * 0.03;
+  return {
+    action,
+    score: worstReplyScore + tacticalScore * 0.08
+  };
+}
+
+function scoreBestFollowUp(
+  state: GameState,
+  player: PlayerId,
+  limit: number
+): number {
+  const followUps = getLikelyActions(state, limit);
+  if (followUps.length === 0) {
+    return evaluateState(state, player);
+  }
+
+  return Math.max(
+    ...followUps.map(({ action }) => scoreTacticalAction(state, action, player))
+  );
+}
+
+function getLikelyActions(state: GameState, limit: number): ScoredAction[] {
+  if (limit <= 0) {
+    return [];
+  }
+
+  const player = state.turn;
+  return sortScoredActions(
+    selectLikelyActions(state, getLegalActions(state), limit).map((action) => ({
+      action,
+      score: scoreTacticalAction(state, action, player)
+    }))
+  );
+}
+
+function selectLikelyActions(
+  state: GameState,
+  actions: GameAction[],
+  limit: number
+): GameAction[] {
+  return sortScoredActions(
+    actions.map((action) => ({
+      action,
+      score: scoreStaticAction(state, action, state.turn)
+    }))
+  )
+    .slice(0, limit)
+    .map((scored) => scored.action);
+}
+
+function scoreTacticalAction(
+  state: GameState,
+  action: GameAction,
+  player: PlayerId
+): number {
+  const result = applyAction(state, action);
+  if (!result.ok) {
+    return -WIN_SCORE;
+  }
+
+  if (result.state.winner === player) {
+    return WIN_SCORE;
+  }
+
+  if (result.state.winner) {
+    return -WIN_SCORE;
+  }
+
+  return scoreTacticalResult(state, action, result.state, player);
+}
+
+function scoreTacticalResult(
+  previousState: GameState,
+  action: GameAction,
+  nextState: GameState,
+  player: PlayerId
+): number {
+  return (
+    evaluateState(nextState, player) +
+    getCapturePressure(previousState, action) * 2 +
+    getDestinationPressure(previousState, action) * 0.25
+  );
+}
+
+function scoreStaticAction(
+  state: GameState,
+  action: GameAction,
+  player: PlayerId
+): number {
+  const token = state.tokens.find((item) => item.id === action.tokenId);
+  const tokenValue = token ? getExpectedValue(token) : 0;
+  const capturePressure = getCapturePressure(state, action);
+  const destinationPressure = getDestinationPressure(state, action);
+  const advancementPressure = getActionAdvancementPressure(state, action, player);
+
+  return (
+    tokenValue * 0.15 +
+    capturePressure * 3 +
+    destinationPressure * 0.2 +
+    advancementPressure * 0.8 +
+    (action.type === "drop" ? 0.4 : 0)
+  );
+}
+
+function getActionAdvancementPressure(
+  state: GameState,
+  action: GameAction,
+  playerId: PlayerId
+): number {
+  if (state.definition.board.height <= 1) {
+    return 0;
+  }
+
+  const player = state.definition.players.find(
+    (definition) => definition.id === playerId
+  );
+  if (!player) {
+    return 0;
+  }
+
+  const maxY = state.definition.board.height - 1;
+  return player.forwardY === 1 ? action.to.y / maxY : (maxY - action.to.y) / maxY;
 }
 
 function chooseWeightedTopAction(
   scored: ScoredAction[],
   random: () => number
 ): GameAction {
-  const sorted = [...scored].sort((left, right) => right.score - left.score);
+  const sorted = sortScoredActions(scored);
   const topN = Math.min(3, sorted.length);
   const top = sorted.slice(0, topN);
   const weights = top.map((_, index) => topN - index);
@@ -235,13 +343,17 @@ function chooseWeightedTopAction(
 }
 
 function chooseHighestScored(scored: ScoredAction[]): ScoredAction {
+  return sortScoredActions(scored)[0];
+}
+
+function sortScoredActions(scored: ScoredAction[]): ScoredAction[] {
   return [...scored].sort((left, right) => {
     if (right.score !== left.score) {
       return right.score - left.score;
     }
 
     return actionKey(left.action).localeCompare(actionKey(right.action));
-  })[0];
+  });
 }
 
 function evaluateState(state: GameState, perspective: PlayerId): number {
