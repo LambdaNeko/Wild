@@ -112,10 +112,17 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.stage-setting-group {
+  display: flex;
+  align-items: center;
   gap: 10px;
 }
 
-.stage-settings h2 {
+.stage-setting-group h2 {
   font-size: 0.9rem;
   white-space: nowrap;
 }
@@ -354,6 +361,14 @@ h2 {
   pointer-events: none;
 }
 
+.turn-b .move-animals {
+  top: 3px;
+  right: auto;
+  bottom: auto;
+  left: 3px;
+  transform: rotate(180deg);
+}
+
 .move-animal-icon {
   width: clamp(15px, 2.5vw, 20px);
   aspect-ratio: 1;
@@ -478,6 +493,10 @@ h2 {
   pointer-events: none;
 }
 
+.token.owner-b .token-main {
+  transform: rotate(180deg);
+}
+
 .token-art {
   width: 112%;
   max-width: none;
@@ -530,6 +549,14 @@ h2 {
   text-align: center;
 }
 
+.turn-b .token-candidates {
+  top: 2px;
+  right: auto;
+  bottom: auto;
+  left: 2px;
+  transform: rotate(180deg);
+}
+
 .side-panel {
   position: relative;
   z-index: 20;
@@ -577,6 +604,10 @@ h2 {
 
 .candidate-panel {
   padding-top: 10px;
+}
+
+.turn-b .candidate-panel {
+  transform: rotate(180deg);
 }
 
 .candidate-header {
@@ -1148,6 +1179,10 @@ h2 {
   backdrop-filter: blur(12px) saturate(1.16);
 }
 
+.mode-control {
+  grid-template-columns: repeat(2, minmax(88px, 1fr));
+}
+
 .segmented-control button {
   min-width: 42px;
   min-height: 42px;
@@ -1233,7 +1268,12 @@ h2 {
     justify-content: space-between;
   }
 
-  .stage-settings h2 {
+  .stage-setting-group {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .stage-setting-group h2 {
     font-size: 0.82rem;
   }
 
