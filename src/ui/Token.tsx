@@ -37,8 +37,6 @@ export function Token({
         animals.find((animal) => animal.id === candidate)?.displayName ?? candidate
     )
     .join("/");
-  const facing =
-    token.currentOwner === "A" && token.location === "board" ? "back" : "front";
 
   return (
     <button
@@ -63,7 +61,6 @@ export function Token({
               animalId={openingAnimal.id}
               label={openingAnimal.displayName}
               className="token-art opening-animal-art"
-              facing={facing}
             />
             <img
               className="token-art mystery-art opening-grass-art"
@@ -77,7 +74,6 @@ export function Token({
             animalId={fixedAnimal.id}
             label={fixedAnimal.displayName}
             className="token-art"
-            facing={facing}
           />
         ) : (
           <img

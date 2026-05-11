@@ -5,7 +5,6 @@ type AnimalIconProps = {
   label: string;
   className?: string;
   decorative?: boolean;
-  facing?: "front" | "back";
 };
 
 export function tokenAssetUrl(fileName: string) {
@@ -16,15 +15,12 @@ export function AnimalIcon({
   animalId,
   label,
   className = "animal-icon",
-  decorative = false,
-  facing = "front"
+  decorative = false
 }: AnimalIconProps) {
-  const suffix = facing === "back" ? "-back" : "";
-
   return (
     <img
       className={className}
-      src={tokenAssetUrl(`${animalId}${suffix}.png`)}
+      src={tokenAssetUrl(`${animalId}.png`)}
       alt={decorative ? "" : label}
       aria-hidden={decorative ? "true" : undefined}
       draggable={false}

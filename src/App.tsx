@@ -39,6 +39,13 @@ type AnimationCue = {
   fixedTokenIds: string[];
 };
 
+type GameMode = "npc" | "local";
+
+const gameModeLabels: Record<GameMode, string> = {
+  npc: "NPC対戦",
+  local: "対人"
+};
+
 const npcStrengthLabels: Record<NpcStrength, string> = {
   weak: "弱",
   medium: "中",
@@ -68,6 +75,7 @@ export default function App() {
   const [state, setState] = useState<GameState>(() => createGame(gameDefinitions[0]));
   const [selectedTokenId, setSelectedTokenId] = useState<string | null>(null);
   const [activeCandidate, setActiveCandidate] = useState<AnimalType | null>(null);
+  const [gameMode, setGameMode] = useState<GameMode>("npc");
   const [npcStrength, setNpcStrength] = useState<NpcStrength>("medium");
   const [message, setMessage] = useState<string>("");
   const [animationCue, setAnimationCue] = useState<AnimationCue | null>(null);
@@ -80,7 +88,7 @@ export default function App() {
     });
   }, []);
 
-  const isNpcTurn = state.turn === NPC_PLAYER && !state.winner;
+  const isNpcTurn = gameMode === "npc" && state.turn === NPC_PLAYER && !state.winner;
   const selectedStage = state.definition;
   const openingRevealTokens = useMemo(
     () =>
@@ -317,19 +325,38 @@ export default function App() {
             <h1>ステージ選択</h1>
           </div>
           <div className="stage-settings">
-            <h2>NPC強さ</h2>
-            <div className="segmented-control" aria-label="NPC強さ">
-              {(Object.keys(npcStrengthLabels) as NpcStrength[]).map((strength) => (
-                <button
-                  className={strength === npcStrength ? "active" : ""}
-                  key={strength}
-                  type="button"
-                  onClick={() => setNpcStrength(strength)}
-                >
-                  {npcStrengthLabels[strength]}
-                </button>
-              ))}
+            <div className="stage-setting-group">
+              <h2>対戦モード</h2>
+              <div className="segmented-control mode-control" aria-label="対戦モード">
+                {(Object.keys(gameModeLabels) as GameMode[]).map((mode) => (
+                  <button
+                    className={mode === gameMode ? "active" : ""}
+                    key={mode}
+                    type="button"
+                    onClick={() => setGameMode(mode)}
+                  >
+                    {gameModeLabels[mode]}
+                  </button>
+                ))}
+              </div>
             </div>
+            {gameMode === "npc" && (
+              <div className="stage-setting-group">
+                <h2>NPC強さ</h2>
+                <div className="segmented-control" aria-label="NPC強さ">
+                  {(Object.keys(npcStrengthLabels) as NpcStrength[]).map((strength) => (
+                    <button
+                      className={strength === npcStrength ? "active" : ""}
+                      key={strength}
+                      type="button"
+                      onClick={() => setNpcStrength(strength)}
+                    >
+                      {npcStrengthLabels[strength]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           <div className="stage-list">
             {gameDefinitions.map((definition, index) => (
@@ -358,13 +385,15 @@ export default function App() {
   }
 
   return (
-    <main className="app-shell">
+    <main className={`app-shell ${
+      gameMode === "local" && state.turn === "B" && !state.winner ? "turn-b" : ""
+    }`}>
       <header className="game-header">
         <div className="game-title-line">
           <h1>{getStageDisplayName(selectedStage)}</h1>
           <span className="stage-current">
             {selectedStage.board.width}x{selectedStage.board.height} / 駒
-            {selectedStage.animals.length}
+            {selectedStage.animals.length} / {gameModeLabels[gameMode]} / {state.turn}の手番
           </span>
         </div>
       </header>
