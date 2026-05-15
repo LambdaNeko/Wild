@@ -33,6 +33,8 @@ export function CandidateList({
     className: "above",
     style: {}
   });
+  const portalTarget =
+    typeof document === "undefined" ? null : document.body;
 
   if (!token) {
     return (
@@ -105,6 +107,7 @@ export function CandidateList({
               {activeCandidate === candidate &&
                 movePattern &&
                 animal &&
+                portalTarget &&
                 createPortal(
                   <span
                     className={`candidate-direction-bubble ${bubblePlacement.className}`}
@@ -140,7 +143,7 @@ export function CandidateList({
                       })}
                     </span>
                   </span>,
-                  document.body
+                  portalTarget
                 )}
             </button>
           );
