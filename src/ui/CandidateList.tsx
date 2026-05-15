@@ -1,4 +1,5 @@
-import { useState, type MouseEvent } from "react";
+import { useState, type CSSProperties, type MouseEvent } from "react";
+import { createPortal } from "react-dom";
 import type { AnimalDefinition, AnimalType, QuantumToken } from "../domain/types";
 import { AnimalIcon } from "./AnimalIcon";
 
@@ -25,9 +26,15 @@ export function CandidateList({
   movePattern,
   onCandidateSelect
 }: CandidateListProps) {
-  const [bubblePlacement, setBubblePlacement] = useState(
-    "above center" as "above center" | "above left" | "above right" | "below center" | "below left" | "below right"
-  );
+  const [bubblePlacement, setBubblePlacement] = useState<{
+    className: "above" | "below";
+    style: CSSProperties;
+  }>({
+    className: "above",
+    style: {}
+  });
+  const portalTarget =
+    typeof document === "undefined" ? null : document.body;
 
   if (!token) {
     return (
@@ -45,15 +52,27 @@ export function CandidateList({
     candidate: AnimalType
   ) {
     const rect = event.currentTarget.getBoundingClientRect();
-    const horizontal =
-      rect.left < 76
-        ? "left"
-        : window.innerWidth - rect.right < 76
-          ? "right"
-          : "center";
-    const vertical = rect.top < 150 ? "below" : "above";
+    const bubbleWidth = 132;
+    const bubbleHeight = 132;
+    const gap = 12;
+    const margin = 8;
+    const centerX = rect.left + rect.width / 2;
+    const left = Math.min(
+      Math.max(centerX - bubbleWidth / 2, margin),
+      window.innerWidth - bubbleWidth - margin
+    );
+    const canShowAbove = rect.top >= bubbleHeight + gap + margin;
+    const top = canShowAbove
+      ? rect.top - bubbleHeight - gap
+      : Math.min(rect.bottom + gap, window.innerHeight - bubbleHeight - margin);
 
-    setBubblePlacement(`${vertical} ${horizontal}` as typeof bubblePlacement);
+    setBubblePlacement({
+      className: canShowAbove ? "above" : "below",
+      style: {
+        left,
+        top
+      }
+    });
     onCandidateSelect(candidate);
   }
 
@@ -85,39 +104,47 @@ export function CandidateList({
                   label={animal.displayName}
                 />
               )}
-              {activeCandidate === candidate && movePattern && animal && (
-                <span className={`candidate-direction-bubble ${bubblePlacement}`}>
-                  <span className="move-pattern-grid" aria-label={`${animal.displayName}の動き`}>
-                    {Array.from({ length: 25 }, (_, index) => {
-                      const x = index % 5;
-                      const y = Math.floor(index / 5);
-                      const moveCell = movePattern.cells.find(
-                        (cell) => cell.x === x && cell.y === y
-                      );
-                      const isCenter = x === 2 && y === 2;
+              {activeCandidate === candidate &&
+                movePattern &&
+                animal &&
+                portalTarget &&
+                createPortal(
+                  <span
+                    className={`candidate-direction-bubble ${bubblePlacement.className}`}
+                    style={bubblePlacement.style}
+                  >
+                    <span className="move-pattern-grid" aria-label={`${animal.displayName}の動き`}>
+                      {Array.from({ length: 25 }, (_, index) => {
+                        const x = index % 5;
+                        const y = Math.floor(index / 5);
+                        const moveCell = movePattern.cells.find(
+                          (cell) => cell.x === x && cell.y === y
+                        );
+                        const isCenter = x === 2 && y === 2;
 
-                      return (
-                        <span
-                          className={`move-pattern-cell ${
-                            isCenter ? "center" : moveCell ? "target" : ""
-                          }`}
-                          key={`${x}-${y}`}
-                        >
-                          {isCenter ? (
-                            <AnimalIcon
-                              animalId={animal.id}
-                              className="move-pattern-icon"
-                              label={animal.displayName}
-                            />
-                          ) : (
-                            (moveCell?.arrow ?? "")
-                          )}
-                        </span>
-                      );
-                    })}
-                  </span>
-                </span>
-              )}
+                        return (
+                          <span
+                            className={`move-pattern-cell ${
+                              isCenter ? "center" : moveCell ? "target" : ""
+                            }`}
+                            key={`${x}-${y}`}
+                          >
+                            {isCenter ? (
+                              <AnimalIcon
+                                animalId={animal.id}
+                                className="move-pattern-icon"
+                                label={animal.displayName}
+                              />
+                            ) : (
+                              (moveCell?.arrow ?? "")
+                            )}
+                          </span>
+                        );
+                      })}
+                    </span>
+                  </span>,
+                  portalTarget
+                )}
             </button>
           );
         })}
