@@ -70,7 +70,7 @@ function getStageDisplayName(definition: GameDefinition) {
 }
 
 export default function App() {
-  const [screen, setScreen] = useState<"stageSelect" | "game">("stageSelect");
+  const [screen, setScreen] = useState<"stageSelect" | "game">("game");
   const [selectedStageId, setSelectedStageId] = useState(gameDefinitions[0].id);
   const [state, setState] = useState<GameState>(() => createGame(gameDefinitions[0]));
   const [selectedTokenId, setSelectedTokenId] = useState<string | null>(null);
@@ -389,12 +389,28 @@ export default function App() {
       gameMode === "local" && state.turn === "B" && !state.winner ? "turn-b" : ""
     }`}>
       <header className="game-header">
+        <div className="brand-row">
+          <div className="brand-mark" aria-hidden="true">♣</div>
+          <h1>こもれび</h1>
+          <div className="header-actions">
+            <button className="icon-button" type="button" aria-label="ヘルプ">?</button>
+            <button className="icon-button" type="button" aria-label="設定">⚙</button>
+          </div>
+        </div>
         <div className="game-title-line">
-          <h1>{getStageDisplayName(selectedStage)}</h1>
-          <span className="stage-current">
-            {selectedStage.board.width}x{selectedStage.board.height} / 駒
-            {selectedStage.animals.length} / {gameModeLabels[gameMode]} / {state.turn}の手番
-          </span>
+          <div className="hud-strip" aria-label="ゲーム状況">
+            <span className="hud-item hud-size">♟ {selectedStage.board.width}×{selectedStage.board.height}</span>
+            <span className="hud-divider" />
+            <span className="hud-item">🦌 駒 {selectedStage.animals.length}</span>
+            <span className="hud-divider" />
+            <span className="hud-item">🛡 {gameModeLabels[gameMode]}</span>
+            <span className="turn-pill">{state.turn} の手番</span>
+            <span className="hud-subline">
+              <span className="status-dot" />
+              B の草むら
+              <strong>なし</strong>
+            </span>
+          </div>
         </div>
       </header>
       <section className="game-layout">
